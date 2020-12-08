@@ -840,15 +840,15 @@ public class Prime {
 
 ### 应用函数到元素
 
-- `map(Function)`：将函数操作应用在输入流的元素中，并将返回值传递到输出流中。
+- `map(Function)`：将函数`Function`应用在输入流的每一个元素上，并将所有结果值作为输出流。
 
-- `mapToInt(ToIntFunction)`：操作同上，但结果是 **IntStream**。
+- `mapToInt(ToIntFunction)`：操作同上，但所有结果作为 **IntStream**。
 
-- `mapToLong(ToLongFunction)`：操作同上，但结果是 **LongStream**。
+- `mapToLong(ToLongFunction)`：操作同上，但所有结果作为 **LongStream**。
 
-- `mapToDouble(ToDoubleFunction)`：操作同上，但结果是 **DoubleStream**。
+- `mapToDouble(ToDoubleFunction)`：操作同上，但所有结果作为 **DoubleStream**。
 
-在这里，我们使用 `map()` 映射多种函数到一个字符串流中。代码示例：
+在这里，我们使用 `map()` 映射几种不同的函数到一个字符串流中。代码示例：
 
 ```java
 // streams/FunctionMap.java
@@ -911,9 +911,9 @@ class FunctionMap {
 
 ```
 
-在上面的自增示例中，我们用 `Integer.parseInt()` 尝试将一个字符串转化为整数。如果字符串不能被转化成为整数就会抛出 `NumberFormatException` 异常，此时我们就回过头来把原始字符串放到输出流中。
+在上面的`Increment`示例中，我们用 `Integer.parseInt()` 尝试将一个字符串转化为整数。如果字符串不能被转化成为整数就会抛出 `NumberFormatException` 异常，此时我们就把原始字符串放回输出流（fallback机制）。
 
-在以上例子中，`map()` 将一个字符串映射为另一个字符串，但是我们完全可以产生和接收类型完全不同的类型，从而改变流的数据类型。下面代码示例：
+在以上例子中，`map()` 将一个字符串映射为另一个字符串，但是我们完全可以产出和入参不同的类型，从而改变流的数据类型。下面代码示例：
 
 ```java
 // streams/FunctionMap2.java
@@ -952,7 +952,7 @@ Numbered(13)
 
 我们将获取到的整数通过构造器 `Numbered::new` 转化成为 `Numbered` 类型。
 
-如果使用 **Function** 返回的结果是数值类型的一种，我们必须使用合适的 `mapTo数值类型` 进行替代。代码示例：
+如果使用 **Function** 返回的结果是数值类型的一种，我们必须用合适的 "`mapTo`操作" 替代。代码示例：
 
 ```java
 // streams/FunctionMap3.java
@@ -984,11 +984,11 @@ class FunctionMap3 {
 17.000000 1.900000 0.230000
 ```
 
-遗憾的是，Java 设计者并没有尽最大努力去消除基本类型。
+遗憾的是，Java 设计者并没有尽一点努力去消除基本类型。
 
 ### 在 `map()` 中组合流
 
-假设我们现在有了一个传入的元素流，并且打算对流元素使用 `map()` 函数。现在你已经找到了一些可爱并独一无二的函数功能，但是问题来了：这个函数功能是产生一个流。我们想要产生一个元素流，而实际却产生了一个元素流的流。
+假设我们现在有了一个传入的元素流，并且打算对流元素使用 `map()` 函数。现在你已经给`map()` 函数找到了一些可爱并独一无二的功能，但是问题来了：这个函数功能是产生一个流。我们想要产生一个元素流，而实际却产生了一个元素流的流。
 
 `flatMap()` 做了两件事：将产生流的函数应用在每个元素上（与 `map()` 所做的相同），然后将每个流都扁平化为元素，因而最终产生的仅仅是元素。
 
