@@ -988,19 +988,19 @@ class FunctionMap3 {
 
 ### 在 `map()` 中组合流
 
-假设我们现在有了一个传入的元素流，并且打算对流元素使用 `map()` 函数。现在你已经给`map()` 函数找到了一些可爱并独一无二的功能，但是问题来了：这个函数功能是产生一个流。我们想要产生一个元素流，而实际却产生了一个元素流的流。
+假设我们有一个输入的元素流，并且打算对这些元素使用 `map()` 函数。现在你已经给`map()` 找了一些可爱并独一无二的功能，但是问题来了：这些功能会产生一个流。此时其实我们只想要一个元素输出流，却输出了一个包含着几组元素流的输出流。
 
-`flatMap()` 做了两件事：将产生流的函数应用在每个元素上（与 `map()` 所做的相同），然后将每个流都扁平化为元素，因而最终产生的仅仅是元素。
+`flatMap()` 做了两件事：1.将产生流的函数应用在每个元素上（这点与 `map()` 所做的相同）；2.将每个流都"扁平化"为元素，因而最终产生的只有元素。
 
-`flatMap(Function)`：当 `Function` 产生流时使用。
+`flatMap(Function)`：当 `Function` 产出流时使用。
 
-`flatMapToInt(Function)`：当 `Function` 产生 `IntStream` 时使用。
+`flatMapToInt(Function)`：当 `Function` 产出 `IntStream` 时使用。
 
-`flatMapToLong(Function)`：当 `Function` 产生 `LongStream` 时使用。
+`flatMapToLong(Function)`：当 `Function` 产出 `LongStream` 时使用。
 
-`flatMapToDouble(Function)`：当 `Function` 产生 `DoubleStream` 时使用。
+`flatMapToDouble(Function)`：当 `Function` 产出 `DoubleStream` 时使用。
 
-为了弄清它的工作原理，我们从传入一个刻意设计的函数给  `map()` 开始。该函数接受一个整数并产生一个字符串流：
+为了弄清它的工作原理，我们从传入一个刻意设计的函数给  `map()` 开始。该函数接受一个整数并产出一个字符串流：
 
 ```java
 // streams/StreamOfStreams.java
@@ -1023,7 +1023,7 @@ java.util.stream.ReferencePipeline$Head
 java.util.stream.ReferencePipeline$Head
 ```
 
-我们天真地希望能够得到字符串流，但实际得到的却是“Head”流的流。我们可以使用 `flatMap()` 解决这个问题：
+我们天真地希望能够得到一个字符串流，但实际得到的却是一个囊括着“Head”流的流。我们可以使用 `flatMap()` 轻易解决这个问题：
 
 ```java
 // streams/FlatMap.java
@@ -1051,7 +1051,7 @@ Fozzie
 Beaker
 ```
 
-从映射返回的每个流都会自动扁平为组成它的字符串。
+从映射(`Mapping`)之后返回的每个流都会自动扁平化，作为最后输出字符串流的一个组件。
 
 下面是另一个演示，我们从一个整数流开始，然后使用每一个整数去创建更多的随机数。
 
@@ -1076,9 +1076,9 @@ public class StreamOfRandoms {
 58 -1 55 93 -1 61 61 29 -1 68 0 22 7 -1 88 28 51 89 9 -1
 ```
 
-在这里我们引入了 `concat()`，它以参数顺序组合两个流。 如此，我们在每个随机 `Integer` 流的末尾添加一个 -1 作为标记。你可以看到最终流确实是从一组扁平流中创建的。
+在这里我们引入了 `concat()`，它以参数顺序合并两个流。 这样做，就能在每个随机 `Integer` 流的末尾添加一个 -1 作为标记。可以看到，最终的流确实是从一组流扁平化得来的。
 
-因为 `rand.ints()` 产生的是一个 `IntStream`，所以我必须使用 `flatMap()`、`concat()` 和 `of()` 的特定整数形式。
+因为 `rand.ints()` 产生的是一个 `IntStream`，所以我必须使用 `flatMap()`、`concat()` 和 `of()` 的特定整数形式(`IntStream,ToInt`)。
 
 让我们再看一下将文件划分为单词流的任务。我们最后使用到的是 **FileToWordsRegexp.java**，它的问题是需要将整个文件读入行列表中 —— 显然需要存储该列表。而我们真正想要的是创建一个不需要中间存储层的单词流。
 
@@ -1101,15 +1101,15 @@ public class FileToWords {
 
 `stream()` 现在是一个静态方法，因为它可以自己完成整个流创建过程。
 
-注意：`\\W+` 是一个正则表达式。表示“非单词字符”，`+` 表示“可以出现一次或者多次”。小写形式的 `\\w` 表示“单词字符”。
+注意：`\\W+` 是一个正则表达式。表示“非单词字符”(它等价于" `[^a-zA-Z0-9_]` ")，`+` 表示“可以出现一次或者多次”。小写形式的 `\\w` 表示“单词字符”  (它等价于" `[A-Za-z0-9_]` ")。
 
-我们之前遇到的问题是 `Pattern.compile().splitAsStream()` 产生的结果为流，这意味着当我们只是想要一个简单的单词流时，在传入的行流（stream of lines）上调用 `map()` 会产生一个单词流的流。幸运的是，`flatMap()`  可以将元素流的流扁平化为一个简单的元素流。或者，我们可以使用 `String.split()` 生成一个数组，其可以被 `Arrays.stream()` 转化成为流：
+我们之前遇到的问题是 `Pattern.compile().splitAsStream()` 产生的是一个流，这意味着当我们只是想要一个简单的单词流时，对输入流调用 `map()` 会产生一个囊括单词流的流。幸运的是，`flatMap()`  可以将囊括元素流的流扁平化为一个简单的元素流。或者，我们还可以用 `String.split()` 生成一个数组，数组又会被 `Arrays.stream()` 转化成为流：
 
 ```java
 .flatMap(line -> Arrays.stream(line.split("\\W+"))))
 ```
 
-因为有了真正的流（而不是`FileToWordsRegexp.java` 中基于集合存储的流），所以每次需要一个新的流时，我们都必须从头开始创建，因为流不能被复用：
+因为有了真正的流（而不是`FileToWordsRegexp.java` 中基于集合存储的流），所以每次需要一个新的流时都必须从头开始创建，因为流不能被复用：
 
 ```java
 // streams/FileToWordsTest.java
@@ -1140,7 +1140,7 @@ is it
 <!-- Optional -->
 ## Optional类
 
-在我们学习终端操作（Terminal Operations）之前，我们必须考虑在一个空流中获取元素会发生什么。我们喜欢沿着“快乐路径”[^1]把流连接起来，同时假设流不会中断。然而，在流中放置 `null` 却会轻易令其中断。那么是否存在某种对象，可以在持有流元素的同时，即使在我们查找的元素不存在时，也能友好地对我们进行提示（也就是说，不会产生异常）？
+在我们学习终端操作（Terminal Operations）之前，我们必须考虑在一个没有任何元素的、空的流中获取元素会发生什么。我们喜欢沿着“快乐路径”[^1]把流连接起来，同时认为流不会中断。然而，在流中放置 `null` 却会轻易令其中断。那么是否存在某种对象，可以在持有流元素的同时，即使在我们查找的元素不存在时，也能友好地对我们进行提示（也就是说，不会产生异常）？
 
 **Optional** 可以实现这样的功能。一些标准流操作返回 **Optional** 对象，因为它们并不能保证预期结果一定存在。包括：
 
@@ -1148,9 +1148,9 @@ is it
 - `findAny()` 返回包含任意元素的 **Optional** 对象，如果流为空则返回 **Optional.empty**
 - `max()` 和 `min()` 返回一个包含最大值或者最小值的 **Optional** 对象，如果流为空则返回 **Optional.empty**
 
- `reduce()` 不再以 `identity` 形式开头，而是将其返回值包装在 **Optional** 中。（`identity` 对象成为其他形式的 `reduce()` 的默认结果，因此不存在空结果的风险）
+- `reduce()` 中不以 “标识”对象（ “identity” object ）开头的，将它的返回值包装在 **Optional** 中。（“标识”对象成为了其它版本 `reduce()` 的默认结果，因此不存在空的风险）
 
-对于数字流 **IntStream**、**LongStream** 和 **DoubleStream**，`average()` 会将结果包装在 **Optional** 以防止流为空。
+- 对于数字流 **IntStream**、**LongStream** 和 **DoubleStream**，`average()` 会将结果包装到 **Optional** ，防止流为空。
 
 以下是对空流进行所有这些操作的简单测试：
 
@@ -1189,7 +1189,7 @@ OptionalDouble.empty
 
 当流为空的时候你会获得一个 **Optional.empty** 对象，而不是抛出异常。**Optional** 拥有 `toString()` 方法可以用于展示有用信息。
 
-注意，空流是通过 `Stream.<String>empty()` 创建的。如果你在没有任何上下文环境的情况下调用 `Stream.empty()`，Java 并不知道它的数据类型；这个语法解决了这个问题。如果编译器拥有了足够的上下文信息，比如：
+注意，如果你在没有任何上下文环境的情况下调用 `Stream.empty()`，Java 并不知道它的数据类型；空流通过 `Stream.<String>empty()` 这个语法创建，解决了这个问题。如果编译器拥有了足够的上下文信息，比如：
 
 ```java
 Stream<String> s = Stream.empty();
@@ -1197,7 +1197,7 @@ Stream<String> s = Stream.empty();
 
 就可以在调用 `empty()` 时推断类型。
 
-这个示例展示了 **Optional** 的两个基本用法：
+这个示例展示了 **Optional** 的两个基本用法（`isPresent()   get()`）：
 
 ```java
 // streams/OptionalBasics.java
@@ -1232,12 +1232,12 @@ Nothing inside!
 
 有许多便利函数可以解包 **Optional** ，这简化了上述“对所包含的对象的检查和执行操作”的过程：
 
-- `ifPresent(Consumer)`：当值存在时调用 **Consumer**，否则什么也不做。
-- `orElse(otherObject)`：如果值存在则直接返回，否则生成 **otherObject**。
-- `orElseGet(Supplier)`：如果值存在则直接返回，否则使用 **Supplier** 函数生成一个可替代对象。
-- `orElseThrow(Supplier)`：如果值存在直接返回，否则使用 **Supplier** 函数生成一个异常。
+- `ifPresent(Consumer)`：若值存在则调用 **Consumer**，否则什么也不做。
+- `orElse(otherObject)`：若值存在则直接返回，否则生成 **otherObject**。
+- `orElseGet(Supplier)`：若值存在则直接返回，否则通过使用 **Supplier** 函数生成一个替代对象。
+- `orElseThrow(Supplier)`：若值存在则直接返回，否则通过使用 **Supplier** 函数生成一个异常。
 
-如下是针对不同便利函数的简单演示：
+如下是不同便利函数的简单演示：
 
 ```java
 // streams/Optionals.java
@@ -1303,7 +1303,7 @@ Epithets
 Caught java.lang.Exception: Supplied
 ```
 
-`test()` 通过传入所有方法都适用的 **Consumer** 来避免重复代码。
+`test()` 通过传入所有方法都适用的 **Consumer** 来避免代码重复。
 
 `orElseThrow()` 通过 **catch** 关键字来捕获抛出的异常。更多细节，将在 [异常](./15-Exceptions.md) 这一章节中学习。
 
@@ -2146,7 +2146,7 @@ IntSummaryStatistics{count=100, sum=50794, min=8, average=507.940000, max=998}
 
 流式操作改变并极大地提升了 Java 语言的可编程性，并可能极大地阻止了 Java 编程人员向诸如 Scala 这种函数式语言的流转。在本书的剩余部分，我们将尽可能地使用流。
 
-[^1]: 在软件或信息建模的上下文中，快乐路径(有时称为快乐流)是没有异常或错误条件的默认场景。例如，验证信用卡号的函数的快乐路径应该是任何验证规则都不会出现错误的地方，从而让执行成功地继续到最后，生成一个积极的响应。[见 wikipedia: happy path](https://en.wikipedia.org/wiki/Happy_path)
+[^1]: 在软件或信息建模的上下文中，快乐路径(有时称为快乐流)是指没有异常或错误情形导致退出的默认场景。例如，验证信用卡号的函数的快乐路径应该是任何验证规则都不会出现错误而中断，从而让执行成功地延续到最后，生成一个积极的响应让使用者快乐。[见 wikipedia: happy path](https://en.wikipedia.org/wiki/Happy_path)
 
 <!-- 分页 -->
 
