@@ -11,7 +11,7 @@
 好像 Java 设计者终于意识到了 Java 使用者多年来的痛苦，在 Java7 中对此引入了巨大的改进。这些新元素被放在 **java.nio.file** 包下面，过去人们通常把 **nio** 中的 **n** 理解为 **new** 即新的 **io**，如今却意味着 **non-blocking** 非阻塞 **io**(**io**就是*input/output输入/输出*)。**java.nio.file** 库终于将 Java 文件操作带到与其他编程语言相同的水平。最重要的是 Java8 新增的 streams 与文件结合使得文件操作编程变得更加优雅。我们将看一下文件操作的两个基本组件：
 
 1. 文件或者目录的路径；
-2. 文件本身。
+2. 文件自身。
 
 <!-- File and Directory Paths -->
 ## 文件和目录路径
@@ -121,14 +121,14 @@ true
 */
 ```
 
-我已经在这一章第一个程序的 **main()** 方法添加了第一行用于展示操作系统的名称，因此你可以看到不同操作系统之间存在哪些差异。理想情况下，差别会相对较小，并且使用 **/** 或者 **\\** 路径分隔符进行分隔。你可以看到我运行在Windows 10 上的程序输出。
+我已经在 **main()** 方法的第一行用于展示操作系统的名称，因此你可以看到不同操作系统之间存在哪些差异。理想情况下，差别会相对较小，诸如 **/** 还是 **\\** 路径分隔符进行分隔之类的。你可以看到我运行在Windows 10 上的程序输出。
 
-当 **toString()** 方法生成完整形式的路径，你可以看到 **getFileName()** 方法总是返回当前文件名。
-通过使用 **Files** 工具类(我们接下来将会更多地使用它)，可以测试一个文件是否存在，测试是否是一个"普通"文件还是一个目录等等。"Nofile.txt"这个示例展示我们描述的文件可能并不在指定的位置；这样可以允许你创建一个新的路径。"PathInfo.java"存在于当前目录中，最初它只是没有路径的文件名，但它仍然被检测为"存在"。一旦我们将其转换为绝对路径，我们将会得到一个从"C:"盘(因为我们是在Windows机器下进行测试)开始的完整路径，现在它也拥有一个父路径。“真实”路径的定义在文档中有点模糊，因为它取决于具体的文件系统。例如，如果文件名不区分大小写，即使路径由于大小写的缘故而不是完全相同，也可能得到肯定的匹配结果。在这样的平台上，**toRealPath()** 将返回实际情况下的 **Path**，并且还会删除任何冗余元素。
+ **toString()** 生成完整路径， **getFileName()** 方法总是返回当前文件名。
+通过使用 **Files** 工具类(我们接下来将会更多地使用它)，可以测试一个文件是否存在、是否"普通"文件、是否目录等等。"Nofile.txt"这个示例展示我们描述的文件可能并不在指定的位置；这样就允许你创建一个新的路径。"PathInfo.java"存在于当前目录中，最初它只是没有路径的文件名，但它仍然被检测为"存在"。一旦我们将其转换为绝对路径，我们将会得到一个从"C:"盘(因为我们是在Windows机器下进行测试)开始的完整路径，现在它也拥有一个父路径。“真实”路径的定义在文档中有点模糊，因为它取决于具体的文件系统。例如，如果文件名不区分大小写，即使路径由于大小写的缘故而不是完全相同，也可能得到肯定的匹配结果。在这样的平台上，**toRealPath()** 将返回实际情况下的 **Path**，并且还会删除任何冗余元素。
 
 这里你会看到 **URI** 看起来只能用于描述文件，实际上 **URI** 可以用于描述更多的东西；通过 [维基百科](https://en.wikipedia.org/wiki/Uniform_Resource_Identifier) 可以了解更多细节。现在我们成功地将 **URI** 转为一个 **Path** 对象。
 
-最后，你会在 **Path** 中看到一些有点欺骗的东西，这就是调用 **toFile()** 方法会生成一个 **File** 对象。听起来似乎可以得到一个类似文件的东西(毕竟被称为 **File** )，但是这个方法的存在仅仅是为了向后兼容。虽然看上去应该被称为"路径"，实际上却应该表示目录或者文件本身。这是个非常草率并且令人困惑的命名，但是由于 **java.nio.file** 的存在我们可以安全地忽略它的存在。
+最后，你会在 **Path** 中看到一些有点欺骗性的定义，这就是调用 **toFile()** 生成的 **File** 对象。这听起来好像得到了一个类似文件的东西(毕竟被称为 **File** )，但是这种描述仅仅是为了兼容老版本。**File** 对象 实际上表示文件或目录本身——应该被称为"路径**Path**"，这是个非常草率并且令人困惑的命名，但是由于 **java.nio.file** 的存在我们可以安全地忽略它的存在。 （这个 **File** 对象是 **java.io.File**， 不兼容旧版本一般用不上）
 
 ### 选取路径部分片段
 **Path** 对象可以非常容易地生成路径的某一部分：
@@ -143,8 +143,8 @@ public class PartsOfPaths {
         Path p = Paths.get("PartsOfPaths.java").toAbsolutePath();
         for(int i = 0; i < p.getNameCount(); i++)
             System.out.println(p.getName(i));
-        System.out.println("ends with '.java': " +
-        p.endsWith(".java"));
+        System.err.println("ends with '.java'1: " + p.endsWith(".java")); //false
+        System.err.println("ends with '.java'2: " + p.endsWith("PartsOfPaths.java"));  //true      
         for(Path pp : p) {
             System.out.print(pp + ": ");
             System.out.print(p.startsWith(pp) + " : ");
@@ -177,7 +177,7 @@ Starts with C:\ true
 */
 
 ```
-可以通过 **getName()** 来索引 **Path** 的各个部分，直到达到上限 **getNameCount()**。**Path** 也实现了 **Iterable** 接口，因此我们也可以通过增强的 for-each 进行遍历。请注意，即使路径以 **.java** 结尾，使用 **endsWith()** 方法也会返回 **false**。这是因为使用 **endsWith()** 比较的是整个路径部分，而不会包含文件路径的后缀。通过使用 **startsWith()** 和 **endsWith()** 也可以完成路径的遍历。但是我们可以看到，遍历 **Path** 对象并不包含根路径，只有使用 **startsWith()** 检测根路径时才会返回 **true**。
+对于 **Path** 中的路径分隔符分隔的几个部分的名字（组件名），可通过 **getName(i)** 来索引，直至上限 **getNameCount()**。还可以通过 for-in 循环进行遍历 (**Path** 也实现了 **Iterable** 接口)。请注意，即使路径的确以 **.java** 结尾，使用 **endsWith()** 也返回 **false**。这是因为使用 **endsWith()** 比较的是 **Path** 的各个完整的组件名，而不仅是某个组件名的子串**.java**。这里展示了使用 **startsWith()** 和 **endsWith()** 在 for-in 循环中检测 **Path** 的当前部分。但是我们可以看到，遍历 **Path** 对象没有包含根路径(C盘D盘之类的盘符)，只有使用 **startsWith()** 检测 **getRoot()** 时才会返回 **true**。
 
 ### 路径分析
 **Files** 工具类包含一系列完整的方法用于获得 **Path** 相关的信息。
@@ -239,10 +239,12 @@ SymbolicLink: false
 在调用最后一个测试方法 **getPosixFilePermissions()** 之前我们需要确认一下当前文件系统是否支持 **Posix** 接口，否则会抛出运行时异常。
 
 ### **Paths**的增减修改
-我们必须能通过对 **Path** 对象增加或者删除一部分来构造一个新的 **Path** 对象。我们使用 **relativize()** 移除 **Path** 的根路径，使用 **resolve()** 添加 **Path** 的尾路径(不一定是“可发现”的名称)。
+我们必须能通过对 **Path** 对象增加或者删除一部分来构造一个新的 **Path** 对象。
+删除：使用 **relativize()** 移除 **Path** 的根路径；
+添加：使用 **resolve()** 添加到 **Path** 的末尾(不一定是“可发现”的名称)。（可以是不存在的目录和文件）
 
-对于下面代码中的示例，我使用 **relativize()** 方法从所有的输出中移除根路径，部分原因是为了示范，部分原因是为了简化输出结果，这说明你可以使用该方法将绝对路径转为相对路径。
-这个版本的代码中包含 **id**，以便于跟踪输出结果：
+对于下面代码中的示例，我使用 **relativize()** 方法从所有的输出中移除根路径，为了示范，也为了简化输出结果。事实证明只有绝对**isAbsolute()**才能使用 **relativize()** 方法。
+这个版本的代码中包含 **id** 以便跟踪输出结果：
 
 ```java
 // files/AddAndSubtractPaths.java
@@ -324,7 +326,7 @@ C:\Users\Bruce\Documents\GitHub\onjava\
 ExtractedExamples\files\nonexistent
 */
 ```
-我还为 **toRealPath()** 添加了更多的测试，这是为了扩展和规则化，防止路径不存在时抛出运行时异常。
+我还对 **toRealPath()** 做了进一步测试，它会一直扩展和规则化 **Path** ，路径不存在时抛出运行时异常。
 
 <!-- Directories -->
 
@@ -357,16 +359,16 @@ public class RmDir {
     }
 }
 ```
-删除目录树的方法实现依赖于 **Files.walkFileTree()**，"walking" 目录树意味着遍历每个子目录和文件。*Visitor* 设计模式提供了一种标准机制来访问集合中的每个对象，然后你需要提供在每个对象上执行的操作。
+删除目录树的方法实现依赖于 **Files.walkFileTree()**，"walking" 目录树意味着遍历每个子目录和文件。 设计模式—— *访问者模式* *Visitor* 提供了一种标准机制来访问集合中的每个对象，然后需要你提供（实现）在每个对象上执行的操作。
 此操作的定义取决于实现的 **FileVisitor** 的四个抽象方法，包括：
 
-    1.  **preVisitDirectory()**：在访问目录中条目之前在目录上运行。 
+    1.  **preVisitDirectory()**：在目录上运行，在其内容被访问之前。 
     2.  **visitFile()**：运行目录中的每一个文件。  
     3.  **visitFileFailed()**：调用无法访问的文件。   
-    4.  **postVisitDirectory()**：在访问目录中条目之后在目录上运行，包括所有的子目录。
+    4.  **postVisitDirectory()**：在目录上运行，在其内容（包括所有的子目录）被访问之后。
 
-为了简化，**java.nio.file.SimpleFileVisitor** 提供了所有方法的默认实现。这样，在我们的匿名内部类中，我们只需要重写非标准行为的方法：**visitFile()** 和 **postVisitDirectory()** 实现删除文件和删除目录。两者都应该返回标志位决定是否继续访问(这样就可以继续访问，直到找到所需要的)。
-作为探索目录操作的一部分，现在我们可以有条件地删除已存在的目录。在以下例子中，**makeVariant()** 接受基本目录测试，并通过旋转部件列表生成不同的子目录路径。这些旋转与路径分隔符 **sep** 使用 **String.join()** 贴在一起，然后返回一个 **Path** 对象。
+为了简化，**java.nio.file.SimpleFileVisitor** 提供了所有方法的默认实现。这样，在我们的匿名内部类中，我们只需要重写非标准行为的方法：**visitFile()** 和 **postVisitDirectory()** 实现删除文件和删除目录。两者都返回“继续访问”标志(这样就可以一直访问，直至找到所需为止)。
+作为我们探索创建和填充目录的一部分，现在我们可以有条件地删除已存在的目录。在以下例子中，**makeVariant()** 接受基本目录测试，并通过旋转组件名列表生成不同的子目录路径。这些旋转(组件名)和路径分隔符 **sep** 用 **String.join()** 粘贴在一起，然后返回一个 **Path** 对象。
 
 ```java
 // files/Directories.java
@@ -461,13 +463,15 @@ test\foo\bar\baz\bag\File.txt
 test\Hello.txt
 */
 ```
-首先，**refreshTestDir()** 用于检测 **test** 目录是否已经存在。若存在，则使用我们新工具类 **rmdir()** 删除其整个目录。检查是否 **exists** 是多余的，但我想说明一点，因为如果你对于已经存在的目录调用 **createDirectory()** 将会抛出异常。**createFile()** 使用参数 **Path** 创建一个空文件; **resolve()** 将文件名添加到 **test Path** 的末尾。
+首先，**refreshTestDir()** 用于检测 **test** 目录是否已经存在。若存在，则使用我们新工具类 **rmdir()** 删除其整个目录。在这里检查是否 **exists()** 做了2次，是冗余的，这是因为我是想阐明，如果你对于已存在的目录调用 **createDirectory()** 将会抛出异常。**createFile()** 以 **Path** 为参数创建了一个空文件; **resolve()** 将文件名添加到该目录路径的末尾。
 
-我们尝试使用 **createDirectory()** 来创建多级路径，但是这样会抛出异常，因为这个方法只能创建单级路径。我已经将 **populateTestDir()** 作为一个单独的方法，因为它将在后面的例子中被重用。对于每一个变量 **variant**，我们都能使用 **createDirectories()** 创建完整的目录路径，然后使用此文件的副本以不同的目标名称填充该终端目录。然后我们使用 **createTempFile()** 生成一个临时文件。
+我们尝试使用 **createDirectory()** 来创建多级路径，但是这样会抛出异常，因为这个方法只能创建单级路径。
 
-在调用 **populateTestDir()** 之后，我们在 **test** 目录下面创建一个临时目录。请注意，**createTempDirectory()** 只有名称的前缀选项。与 **createTempFile()** 不同，我们再次使用它将临时文件放入新的临时目录中。你可以从输出中看到，如果未指定后缀，它将默认使用".tmp"作为后缀。
+我已经将 **populateTestDir()** 作为一个单独的方法，因为它将在后面的例子中被重用。对于每一个 **variant** ( **Path** 对象)，我们都能使用 **createDirectories()** 创建完整的目录路径(目录树)，然后使用此文件(Directories.java)的拷贝以另一个的名称(File.txt)填充该目录树的终端。然后我们使用 **createTempFile()** 生成一个临时文件。(这里我们给 **createTempFile()** 传的参数是两个 **null** )
 
-为了展示结果，我们首次使用看起来很有希望的 **newDirectoryStream()**，但事实证明这个方法只是返回 **test** 目录内容的 Stream 流，并没有更多的内容。要获取目录树的全部内容的流，请使用 **Files.walk()**。
+在调用 **populateTestDir()** 之后，下一步的操作是在 **test** 目录下面创建一个临时目录。请注意，**createTempDirectory()** 只有名称的前缀(设置)选项，这一点和 **createTempFile()** 不同。再下一步，我们使用 **createTempFile()** 将临时文件放入新的临时目录中。你可以从输出中看到，如果未指定后缀，默认使用" **.tmp** "作为后缀。
+
+为了列出上述操作的结果，我们开始试用很有前途的 **newDirectoryStream()**，但事实证明这个方法只是流化(stream化) **test** 这一级的目录内容，并没有再深入。要获取目录树的全部内容的流，请使用 **Files.walk()**。
 
 <!-- File Systems -->
 
