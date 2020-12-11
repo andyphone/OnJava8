@@ -463,7 +463,7 @@ test\foo\bar\baz\bag\File.txt
 test\Hello.txt
 */
 ```
-首先，**refreshTestDir()** 用于检测 **test** 目录是否已经存在。若存在，则使用我们新工具类 **rmdir()** 删除其整个目录。在这里检查是否 **exists()** 做了2次，是冗余的，这是因为我是想阐明，如果你对于已存在的目录调用 **createDirectory()** 将会抛出异常。**createFile()** 以 **Path** 为参数创建了一个空文件; **resolve()** 将文件名添加到该目录路径的末尾。
+首先，**refreshTestDir()** 用于检测 **test** 目录是否已经存在。若存在，则使用我们新工具类 **rmdir()** 删除其整个目录。在这里检查是否 **exists()** 做了2次，是重复的，这是因为我是想阐明，如果你对于已存在的目录调用 **createDirectory()** 将会抛出异常。**createFile()** 以 **Path** 为参数创建了一个空文件; **resolve()** 将文件名添加到该目录路径的末尾。
 
 我们尝试使用 **createDirectory()** 来创建多级路径，但是这样会抛出异常，因为这个方法只能创建单级路径。
 
@@ -476,7 +476,11 @@ test\Hello.txt
 <!-- File Systems -->
 
 ## 文件系统
-为了完整起见，我们需要一种方法查找文件系统相关的其他信息。在这里，我们使用静态的 **FileSystems** 工具类获取"默认"的文件系统，但你同样也可以在 **Path** 对象上调用 **getFileSystem()** 以获取创建该 **Path** 的文件系统。你可以获得给定 *URI* 的文件系统，还可以构建新的文件系统(对于支持它的操作系统)。
+为了完整性，我们需要一种方法来找出有关文件系统的其余信息。在这里，我们可以:
+- 使用静态的 **FileSystems** 工具类获取"默认"的文件系统；`FileSystems.getDefault()`
+- 对 **Path** 对象调用 **getFileSystem()** 以获取创建该 **Path** 的文件系统；`xx.getFileSystem()`
+- 获得给定 *URI* 对应的文件系统；`FileSystems.getFileSystem(URI)`
+- 构建新的文件系统(对于支持该操作的操作系统)。`FileSystems.newFileSystem(URI,map)`
 ```java
 // files/FileSystemDemo.java
 import java.nio.file.*;
@@ -518,12 +522,12 @@ sun.nio.fs.WindowsFileSystemProvider@6d06d69c
 File Attribute Views: [owner, dos, acl, basic, user]
 */
 ```
-一个 **FileSystem** 对象也能生成 **WatchService** 和 **PathMatcher** 对象，将会在接下来两章中详细讲解。
+一个 **FileSystem** 对象也能生成 **WatchService** 和 **PathMatcher** 对象，会在接下来两节中讲解。
 
 <!-- Watching a Path -->
 
 ## 路径监听
-通过 **WatchService** 可以设置一个进程对目录中的更改做出响应。在这个例子中，**delTxtFiles()** 作为一个单独的任务执行，该任务将遍历整个目录并删除以 **.txt** 结尾的所有文件，**WatchService** 会对文件删除操作做出反应：
+通过 **WatchService** 可以设置一个进程，对目录中的更改做出响应。在这个例子中，**delTxtFiles()** 作为一个单独的任务执行，该任务将遍历整个目录并删除以 **.txt** 结尾的所有文件，**WatchService** 会对文件删除操作做出反应：
 
 ```java
 // files/PathWatcher.java
@@ -585,15 +589,17 @@ evt.kind(): ENTRY_DELETE
 */
 ```
 
-**delTxtFiles()** 中的 **try** 代码块看起来有些多余，因为它们捕获的是同一种类型的异常，外部的 **try** 语句似乎已经足够了。然而出于某种原因，Java 要求两者都必须存在(这也可能是一个 bug)。还要注意的是在 **filter()** 中，我们必须显式地使用 **f.toString()** 转为字符串，否则我们调用 **endsWith()** 将会与整个 **Path** 对象进行比较，而不是路径名称字符串的一部分进行比较。
+**delTxtFiles()** 中的 **try** 代码块看起来有重复，因为它们捕获的是同一种类型的异常，似乎只要外部的 **try** 语句已经足够了。然而出于某种原因，Java 要求两者都在(这也可能是一个 bug)。还要注意的是在 **filter()** 中，我们必须显式地使用 **f.toString()** 转为字符串，否则 **endsWith()** 会与整个 **Path** 对象进行比较，而不是只比较路径的字符串名称这部分。
 
-一旦我们从 **FileSystem** 中得到了 **WatchService** 对象，我们将其注册到 **test** 路径以及我们感兴趣的项目的变量参数列表中，可以选择 **ENTRY_CREATE**，**ENTRY_DELETE** 或 **ENTRY_MODIFY**(其中创建和删除不属于修改)。
+一旦我们从 **FileSystem** 中得到了 **WatchService** 对象，就将 **WatchService** 对象及感兴趣项的参数列表一起注册到 **test** 对象，参数列表可选 **ENTRY_CREATE**，**ENTRY_DELETE** 或 **ENTRY_MODIFY**(其中创建 *CREATE* 和删除 *DELETE* 不属于修改)。
 
-因为接下来对 **watcher.take()** 的调用会在发生某些事情之前停止所有操作，所以我们希望 **deltxtfiles()** 能够并行运行以便生成我们感兴趣的事件。为了实现这个目的，我通过调用 **Executors.newSingleThreadScheduledExecutor()** 产生一个 **ScheduledExecutorService** 对象，然后调用 **schedule()** 方法传递所需函数的方法引用，并且设置在运行之前应该等待的时间。
+因为接下来对 **watcher.take()** (开始监听事件)的调用会在监听到增删改之前一直阻塞线程，所以我们希望 **deltxtfiles()** 能够并行运行以便生成我们感兴趣的事件。(删完再监听,晚了,一直监听不到；先监听再删，删操作被阻塞。因此只能多线程并发)
+
+为了这一目的，我通过调用 **Executors.newSingleThreadScheduledExecutor()** 产生一个 **ScheduledExecutorService** 对象，然后调用 **schedule()** 方法传递所需函数的方法引用，并设置在开始监听 **watcher.take()** 之后延时几秒发生。
 
 此时，**watcher.take()** 将等待并阻塞在这里。当目标事件发生时，会返回一个包含 **WatchEvent** 的 **Watchkey** 对象。展示的这三种方法是能对 **WatchEvent** 执行的全部操作。
 
-查看输出的具体内容。即使我们正在删除以 **.txt** 结尾的文件，在 **Hello.txt** 被删除之前，**WatchService** 也不会被触发。你可能认为，如果说"监视这个目录"，自然会包含整个目录和下面子目录，但实际上：只会监视给定的目录，而不是下面的所有内容。如果需要监视整个树目录，必须在整个树的每个子目录上放置一个 **Watchservice**。
+查看输出的具体内容。即使我们正在删除以 **.txt** 结尾的文件，在 **Hello.txt** 被删除之前，**WatchService** 也不会被触发。你可能认为，如果说"监视这个目录"，自然会包含整个目录和下面子目录，但实际上：只会监视给定的目录，不包括下面的。如果需要监视整个树目录，必须在整个树的每个子目录上放置一个 **Watchservice**。
 
 ```java
 // files/TreeWatcher.java
@@ -648,12 +654,12 @@ evt.kind(): ENTRY_DELETE
 */
 ```
 
-在 **watchDir()** 方法中给 **WatchSevice** 提供参数 **ENTRY_DELETE**，并启动一个独立的线程来监视该**Watchservice**。这里我们没有使用 **schedule()** 进行启动，而是使用 **submit()** 启动线程。我们遍历整个目录树，并将 **watchDir()** 应用于每个子目录。现在，当我们运行 **deltxtfiles()** 时，其中一个 **Watchservice** 会检测到每一次文件删除。
+在 **watchDir()** 方法中给 **WatchSevice** 提供参数 **ENTRY_DELETE**，并启动一个独立的线程来监视该**Watchservice**。这里我们没有使用 **schedule()** 进行启动，而是使用 **submit()** 启动线程。我们遍历整个目录树，并将 **watchDir()** 应用于每个子目录。现在，当我们运行 **deltxtfiles()** 时，其中的一个 **Watchservice** 会检测到最开始的一次删除。
 
 <!-- Finding Files -->
 
 ## 文件查找
-到目前为止，为了找到文件，我们一直使用相当粗糙的方法，在 `path` 上调用 `toString()`，然后使用 `string` 操作查看结果。事实证明，`java.nio.file` 有更好的解决方案：通过在 `FileSystem` 对象上调用 `getPathMatcher()` 获得一个 `PathMatcher`，然后传入您感兴趣的模式。模式有两个选项：`glob` 和 `regex`。`glob` 比较简单，实际上功能非常强大，因此您可以使用 `glob` 解决许多问题。如果您的问题更复杂，可以使用 `regex`，这将在接下来的 `Strings` 一章中解释。
+到目前为止，为了找到文件，我们一直使用相当粗糙的方法，在 `path` 上调用 `toString()`，然后使用 `string` 相关操作查看结果。事实证明，`java.nio.file` 有更好的解决方案：`PathMatcher`。其通过在 `FileSystem` 对象上调用 `getPathMatcher()` 获得，然后传入您感兴趣的模式。模式有两个选项：`glob` 和 `regex`。`glob` 看似简单实际上功能十分强大，因此您可以使用 `glob` 解决许多问题。如果您的问题更复杂，可以使用 `regex`(这将在接下来的 `Strings` 一章中解释)。
 
 在这里，我们使用 `glob` 查找以 `.tmp` 或 `.txt` 结尾的所有 `Path`：
 
@@ -716,11 +722,11 @@ dir.tmp
 */
 ```
 
-在 `matcher` 中，`glob` 表达式开头的 `**/` 表示“当前目录及所有子目录”，这在当你不仅仅要匹配当前目录下特定结尾的 `Path` 时非常有用。单 `*` 表示“任何东西”，然后是一个点，然后大括号表示一系列的可能性---我们正在寻找以 `.tmp` 或 `.txt` 结尾的东西。您可以在 `getPathMatcher()` 文档中找到更多详细信息。
+在 `matcher` 定义中，`glob` 表达式开头的 `**/` 表示“当前目录及所有子目录”，这在当你不仅仅要匹配当前目录下特定结尾的 `Path` 时非常有用。单 `*` 表示“任何东西”，然后是一个点，然后大括号表示一系列的可能性---我们正在寻找以 `.tmp` 或 `.txt` 结尾的东西。您可以在 `getPathMatcher()` 文档中找到更多详细信息。
 
-`matcher2` 只使用 `*.tmp`，通常不匹配任何内容，但是添加 `map()` 操作会将完整路径减少到末尾的名称。
+`matcher2` 只使用 `*.tmp`，通常不匹配任何内容，但是添加 `map()` 操作会将完整路径减少到末尾的名称 ( 因此现在有匹配内容了 )。
 
-注意，在这两种情况下，输出中都会出现 `dir.tmp`，即使它是一个目录而不是一个文件。要只查找文件，必须像在最后 `files.walk()` 中那样对其进行筛选。
+注意，在这两种情况下，输出中都会出现 `dir.tmp`，即使它是目录而不是文件。要只查找文件，必须像在最后 `files.walk()` 中那样对其进行筛选—— `.filter(Files::isRegularFile)`。
 
 <!-- Reading & Writing Files -->
 ## 文件读写
