@@ -595,7 +595,7 @@ evt.kind(): ENTRY_DELETE
 
 因为接下来对 **watcher.take()** (开始监听事件)的调用会在监听到增删改之前一直阻塞线程，所以我们希望 **deltxtfiles()** 能够并行运行以便生成我们感兴趣的事件。(删完再监听,晚了,一直监听不到；先监听再删，删操作被阻塞。因此只能多线程并发)
 
-为了这一目的，我通过调用 **Executors.newSingleThreadScheduledExecutor()** 产生一个 **ScheduledExecutorService** 对象，然后调用 **schedule()** 方法传递所需函数的方法引用，并设置在开始监听 **watcher.take()** 之后延时几秒发生。
+为了这一目的，我通过调用 **Executors.newSingleThreadScheduledExecutor()** 产生一个 **ScheduledExecutorService** 对象，然后调用 **schedule()** 方法传递所需函数的方法引用，并设置在开始监听（ **watcher.take()** ）之后延时（250ms）发生。
 
 此时，**watcher.take()** 将等待并阻塞在这里。当目标事件发生时，会返回一个包含 **WatchEvent** 的 **Watchkey** 对象。展示的这三种方法是能对 **WatchEvent** 执行的全部操作。
 
@@ -804,7 +804,7 @@ Cheese.txt: 199
 
 2. 您只需要通过文件进行局部操作就可以得到您想要的结果，因此读取整个文件会浪费时间。
 
-`Files.lines()` 方便地将文件转换以"行"为元素的 `Stream`：
+`Files.lines()` 方便地将文件转换以 **"行"** 为单位元素的 `Stream`：
 
 ```java
 // files/ReadLineStream.java
@@ -823,9 +823,9 @@ public class ReadLineStream {
 */
 ```
 
-这对本章开头的示例代码`PathInfo.java`做了流式处理，跳过 13 行，然后选择下一行并将其打印出来。
+这对本章开头的示例代码`PathInfo.java`做了流式处理，跳过 13 **行** ，然后选择下一行并将其打印出来。
 
-`Files.lines()` 对于把文件作为传入的行流处理非常有用，但是如果你想读取，处理或写入全在一个 `Stream` 中怎么办？这就需要稍微复杂的代码：
+`Files.lines()` 对于处理文件（转为 **"行"** 为单位元素的输入流）非常有用，但如果你想读取、处理或写入全在一个 `Stream` 中又怎么做呢？这就需要稍微复杂的代码：
 
 ```java
 // files/StreamInAndOut.java
