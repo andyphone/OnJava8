@@ -1041,17 +1041,14 @@ public class Groups {
     } 
 }
 /* Output: 
-[the slithy toves][the][slithy toves][slithy][toves] 
-[in the wabe.][in][the wabe.][the][wabe.] 
-[were the borogoves,][were][the 
-borogoves,][the][borogoves,] 
-[mome raths outgrabe.][mome][raths 
-outgrabe.][raths][outgrabe.] 
-[Jabberwock, my son,][Jabberwock,][my son,][my][son,] 
-[claws that catch.][claws][that catch.][that][catch.] 
-[bird, and shun][bird,][and shun][and][shun] 
-[The frumious Bandersnatch.][The][frumious 
-Bandersnatch.][frumious][Bandersnatch.] 
+[the slithy toves][the][slithy toves][slithy][toves]
+[in the wabe.][in][the wabe.][the][wabe.]
+[were the borogoves,][were][the borogoves,][the][borogoves,]
+[mome raths outgrabe.][mome][raths outgrabe.][raths][outgrabe.]
+[Jabberwock, my son,][Jabberwock,][my son,][my][son,]
+[claws that catch.][claws][that catch.][that][catch.]
+[bird, and shun][bird,][and shun][and][shun]
+[The frumious Bandersnatch.][The][frumious Bandersnatch.][frumious][Bandersnatch.]
 */
 ```
 这首诗来自于 Lewis Carroll 所写的 *Through the Looking Glass* 中的 “Jabberwocky”。可以看到这个正则表达式模式有许多圆括号分组，由任意数目的非空白符（`\\S+`）及随后的任意数目的空白符（`\\s+`）所组成。目的是捕获每行的最后3个词，每行最后以 `\$` 结束。不过，在正常情况下是将 `\$` 与整个输入序列的末端相匹配。所以我们一定要显式地告知正则表达式注意输入序列中的换行符。这可以由序列开头的模式标记 `(?m)` 来完成（模式标记马上就会介绍）。
@@ -1150,13 +1147,13 @@ Pattern Pattern.compile(String regex, int flag)
 
 | 编译标记 | 效果 |
 | ---- |---- |
-| `Pattern.CANON_EQ` | 当且仅当两个字符的完全规范分解相匹配时，才认为它们是匹配的。例如，如果我们指定这个标记，表达式`\u003F`就会匹配字符串`?`。默认情况下，匹配不考虑规范的等价性 |
+| `Pattern.CANON_EQ` | 开启canonical equivalence。当且仅当两个字符的正规分解(canonical decomposition)都完全相同时，才认为它们是匹配的。例如，如果我们用了这个标记之后，表达式`\u003F`就会匹配字符串`?`。默认情况下，匹配不考虑规范的等价性（canonical equivalence） |
 | `Pattern.CASE_INSENSITIVE(?i)` | 默认情况下，大小写不敏感的匹配假定只有US-ASCII字符集中的字符才能进行。这个标记允许模式匹配不考虑大小写（大写或小写）。通过指定`UNICODE_CASE`标记及结合此标记。基于Unicode的大小写不敏感的匹配就可以开启了 |
-| `Pattern.COMMENTS(?x)` | 在这种模式下，空格符将被忽略掉，并且以`#`开始直到行末的注释也会被忽略掉。通过嵌入的标记表达式也可以开启Unix的行模式 |
+| `Pattern.COMMENTS(?x)` | 正则表达式中允许出现空白符(whitespace)和注解(comments)，在这种模式下，空格符将被忽略掉，并且以`#`开始直到行末的注释也会被忽略掉。通过嵌入的标记表达式也可以开启Unix的行模式 |
 | `Pattern.DOTALL(?s)` | 在dotall模式下，表达式`.`匹配所有字符，包括行终止符。默认情况下，`.`不会匹配行终止符 |
-| `Pattern.MULTILINE(?m)` | 在多行模式下，表达式`^`和`$`分别匹配一行的开始和结束。`^`还匹配输入字符串的开始，而`$`还匹配输入字符串的结尾。默认情况下，这些表达式仅匹配输入的完整字符串的开始和结束 |
+| `Pattern.MULTILINE(?m)` | 启用多行匹配模式。在多行匹配模式下，模式中的`^`和`$`将逐次匹配每一行的行首和行尾。在默认情况下(即未启用多行匹配模式)，`^`和`$`将匹配整个字符串的首部和尾部。等价于修饰符(?m)。 |
 | `Pattern.UNICODE_CASE(?u)` | 当指定这个标记，并且开启`CASE_INSENSITIVE`时，大小写不敏感的匹配将按照与Unicode标准相一致的方式进行。默认情况下，大小写不敏感的匹配假定只能在US-ASCII字符集中的字符才能进行 |
-| `Pattern.UNIX_LINES(?d)` | 在这种模式下，在`.`、`^`和`$`的行为中，只识别行终止符`\n` |
+| `Pattern.UNIX_LINES(?d)` | 启用Unix换行模式。在这种模式下，在`.`、`^`和`$`的行为中，只识别一种行终止符——`\n` |
 
 在这些标记中，`Pattern.CASE_INSENSITIVE`、`Pattern.MULTILINE` 以及 `Pattern.COMMENTS`（对声明或文档有用）特别有用。请注意，你可以直接在正则表达式中使用其中的大多数标记，只需要将上表中括号括起来的字符插入到正则表达式中，你希望它起作用的位置即可。
 
@@ -1213,7 +1210,7 @@ public class SplitDemo {
 [This, unusual use, of exclamation!!points]
 */
 ```
-第二种形式的 `split()` 方法可以限制将输入分割成字符串的数量。
+第二种形式的 `split()` 方法可以限制发生的分割次数。
 ### 替换操作
 正则表达式在进行文本替换时特别方便，它提供了许多方法：
 + `replaceFirst(String replacement)` 以参数字符串 `replacement` 替换掉第一个匹配成功的部分。
@@ -1280,7 +1277,7 @@ ExtrActEd blOck.
 
 `mInput` 匹配 `/*!` 和 `！*/` 之间的所有文字（注意分组的括号）。接下来，将存在两个或两个以上空格的地方，缩减为一个空格，并且删除每行开头部分的所有空格（为了使每一行都达到这个效果，而不仅仅是删除文本开头部分的空格，这里特意开启了多行模式）。这两个替换操作所使用的的 `replaceAll()` 是 `String` 对象自带的方法，在这里，使用此方法更方便。注意，因为这两个替换操作都只使用了一次 `replaceAll()`，所以，与其编译为 `Pattern`，不如直接使用 `String` 的 `replaceAll()` 方法，而且开销也更小些。
 
-`replaceFirst()` 只对找到的第一个匹配进行替换。此外，`replaceFirst()` 和 `replaceAll()` 方法用来替换的只是普通字符串，所以，如果想对这些替换字符串进行某些特殊处理，这两个方法时无法胜任的。如果你想要那么做，就应该使用 `appendReplacement()` 方法。该方法允许你在执行替换的过程中，操作用来替换的字符串。在这个例子中，先构造了 `sbuf` 用来保存最终结果，然后用 `group()` 选择一个组，并对其进行处理，将正则表达式找到的元音字母替换成大些字母。一般情况下，你应该遍历执行所有的替换操作，然后再调用 `appendTail()` 方法，但是，如果你想模拟 `replaceFirst()`（或替换n次）的行为，那就只需要执行一次替换，然后调用 `appendTail()` 方法，将剩余未处理的部分存入 `sbuf` 即可。
+`replaceFirst()` 只对找到的第一个匹配进行替换。此外，`replaceFirst()` 和 `replaceAll()` 方法用来替换的只是普通字符串，所以，如果想对这些替换字符串进行某些特殊处理，这两个方法时无法胜任的。如果你想要那么做，就应该使用 `appendReplacement()` 方法。该方法允许你在执行替换的过程中，操作用来替换的字符串。在这个例子中，先构造了 `sbuf` 用来保存最终结果，然后用 `group()` 选择一个组，并对其进行处理，将正则表达式找到的元音字母替换成大些字母。一般情况下，你应该遍历执行所有的替换操作，然后再调用 `appendTail()` 方法，但是，如果你想模拟 `replaceFirst()`（或替换n次）的行为，那就只需要执行一次替换，然后调用 `appendTail()` 方法将其余部分存入 `sbuf` 即可。
 
 同时，`appendReplacement()` 方法还允许你通过 `\$g` 直接找到匹配的某个组，这里的 `g` 就是组号。然而，它只能应付一些简单的处理，无法实现类似前面这个例子中的功能。
 ### `reset()`
@@ -1308,7 +1305,10 @@ fix rig rag
 ```
 使用不带参数的 `reset()` 方法，可以将 `Matcher` 对象重新设置到当前字符序列的起始位置。
 ### 正则表达式与 Java I/O
-到目前为止，我们看到的例子都是将正则表达式用于静态的字符串。下面的例子将向你演示，如何应用正则表达式在一个文件中进行搜索匹配操作。`JGrep.java` 的灵感源自于 Unix 上的 *grep*。它有两个参数：文件名以及要匹配的正则表达式。输出的是每行有匹配的部分以及匹配部分在行中的位置。
+到目前为止，我们看到的例子都是将正则表达式用于静态的字符串。下面的例子将向你演示，如何应用正则表达式在一个文件中进行搜索匹配操作。`JGrep.java` 的灵感源自于 Unix 上的 *grep*。它有两个参数：
+
+`args[0]`文件名；`args[1]`要匹配的正则表达式。 输出的是每行有匹配的部分以及匹配部分在行中的位置。
+
 ```java
 // strings/JGrep.java 
 // A very simple version of the "grep" program 
@@ -1435,9 +1435,9 @@ My favorite double is 0.809015.
 ```
 `Scanner` 的构造器可以接收任意类型的输入对象，包括 `File`、`InputStream`、`String` 或者像此例中的`Readable` 实现类。`Readable` 是 Java SE5 中新加入的一个接口，表示“具有 `read()` 方法的某种东西”。上一个例子中的 `BufferedReader` 也归于这一类。
 
-有了 `Scanner`，所有的输入、分词、以及解析的操作都隐藏在不同类型的 `next` 方法中。普通的 `next()` 方法返回下一个 `String`。所有的基本类型（除 `char` 之外）都有对应的 `next` 方法，包括 `BigDecimal` 和 `BigInteger`。所有的 next 方法，只有在找到一个完整的分词之后才会返回。`Scanner` 还有相应的 `hasNext` 方法，用以判断下一个输入分词是否是所需的类型，如果是则返回 `true`。
+有了 `Scanner`，所有的输入、分词、以及解析的操作都隐藏在不同类型的 `next` 方法中。普通的 `next()` 方法返回下一个 `String`。所有的基本类型（除 `char` 之外）以及 `BigDecimal` 和 `BigInteger`都有对应的 `next` 方法。所有的 next 方法，只有在找到一个完整的分词之后才会返回。`Scanner` 还有相应的 `hasNext` 方法，用以判断下一个输入分词是否是所需的类型，如果是则返回 `true`。
 
-在 `BetterRead.java` 中没有用 `try` 区块捕获`IOException`。因为，`Scanner` 有一个假设，在输入结束时会抛出 `IOException`，所以 `Scanner` 会把 `IOException` 吞掉。不过，通过 `ioException()` 方法，你可以找到最近发生的异常，因此，你可以在必要时检查它。
+在 `BetterRead.java` 中没有用 `try` 区块捕获`IOException`。因为，`Scanner` 有一个假设，抛出 `IOException` 就表示输入结束，所以 `Scanner` 会把 `IOException` 吞掉。不过，通过 `ioException()` 方法，你可以找到最近发生的异常，因此，你可以在必要时检查它。
 ### `Scanner` 分隔符
 默认情况下，`Scanner` 根据空白字符对输入进行分词，但是你可以用正则表达式指定自己所需的分隔符：
 ```java
@@ -1545,10 +1545,10 @@ But I'm not dead yet! I feel happy!
 [^3]: 网上还有很多实用并且成熟的正则表达式工具。
 
 
-[^4]: input来自于[Galaxy Quest](https://en.wikipedia.org/wiki/Galaxy_Quest)中Taggart司令的一篇演讲。
+[^4]: input来自于电影《惊爆银河系[Galaxy Quest](https://en.wikipedia.org/wiki/Galaxy_Quest)》中Taggart指挥官的一篇演讲。
 
 
-[^5]: 我不知道他们是如何想出这个方法名的，或者它到底指的什么。这只是代码审查很重要的原因之一。
+[^5]: 我不知道他们是如何想出这个方法名的，或者它到底指的什么。这就是代码审查很重要的原因之一。
 
 <!-- 分页 -->
 
