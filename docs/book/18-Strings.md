@@ -43,7 +43,7 @@ howdy
 String s = "asdf";
 String x = Immutable.upcase(s);
 ```
-难道你真的希望 `upcase()` 方法改变其参数吗？对代码的读者来说，一个参数通常看起来像是提供给方法的一个信息，而不是需要被修改的东西。这是重要的保障，它使代码更易于编写和阅读。
+难道你真的希望 `upcase()` 方法改变它的方法参数吗？对代码的读者来说，一个方法的参数通常看起来像是提供给方法的一个信息，而不是需要被修改的东西。这是重要的保障，它使代码更易于编写和阅读。
 
 
 <!-- Overloading + vs. StringBuilder -->
@@ -67,9 +67,9 @@ public class Concatenation {
 abcmangodef47 
 */
 ```
-可以想象一下，这段代码是这样工作的：`String` 可能有一个 `append()` 方法，它会生成一个新的 `String` 对象，以包含“abc”与 `mango` 连接后的字符串。该对象会再创建另一个新的 `String` 对象，然后与“def”相连，生成另一个新的对象，依此类推。
+可以想象一下，这段代码是这样工作的：字符串 “abc” 可能用一个 `append()` 方法，它生成一个新的字符串对象来存放 “abc” 与 `mango` 内容的联结结果。而该对象在与 “def” 相连时会再创建另一个新的字符串对象……依此类推。
 
-这种方式当然是可行的，但是为了生成最终的 `String` 对象，会产生一大堆需要垃圾回收的中间对象。我猜想，Java 设计者一开始就是这么做的（这也是软件设计中的一个教训：除非你用代码将系统实现，并让它运行起来，否则你无法真正了解它会有什么问题），然后他们发现其性能相当糟糕。
+这种方式当然是可行的，但是为了生成最终的 `String` 对象，产生了一大堆需要垃圾回收的中间对象。我猜 Java 设计者先试过这一做法（这也是软件设计中的一条经验：除非你用代码将系统实现，并让它运行起来，否则你无法真正了解它会有什么问题），然后他们发现其性能不可接受。
 
 想看看以上代码到底是如何工作的吗？可以用 JDK 自带的 `javap` 工具来反编译以上代码。命令如下：
 ```java
@@ -236,12 +236,12 @@ public class UsingStringBuilder {
 
 `string2()` 使用了 `Stream`，这样代码更加简洁美观。可以证明，`Collectors.joining()` 内部也是使用的 `StringBuilder`，这种写法不会影响性能！
 
-`StringBuilder `是 Java SE5 引入的，在这之前用的是 `StringBuffer`。后者是线程安全的（参见[并发编程](./24-Concurrent-Programming.md)），因此开销也会大些。使用 `StringBuilder` 进行字符串操作更快一点。
+`StringBuilder`是 Java 5 引入的，在此之前，Java使用了`StringBuffer`，它是线程安全的（参见[并发编程](./24-Concurrent-Programming.md)），因此开销也会大些。使用 `StringBuilder` 进行字符串操作更快一点。
 
 <!-- Unintended Recursion -->
 
 ## 意外递归
-Java 中的每个类从根本上都是继承自 `Object`，标准集合类也是如此，它们都有 `toString()` 方法，并且覆盖了该方法，使得它生成的 `String` 结果能够表达集合自身，以及集合包含的对象。例如 `ArrayList.toString()`，它会遍历 `ArrayList` 中包含的所有对象，调用每个元素上的 `toString()` 方法：
+Java 中的标准集合类和其它类一样，最终的父类都是 `Object`，因此它们都有 `toString()` 方法。该方法被重写使得生成的 `String` 结果能够表达集合自身，以及集合包含的对象。例如 `ArrayList.toString()`，它会遍历 `ArrayList` 中包含的所有对象，调用每个元素上的 `toString()` 方法：
 ```java
 // strings/ArrayListDisplay.java 
 import java.util.*;
@@ -282,13 +282,13 @@ public class InfiniteRecursion {
     } 
 } 
 ```
-当你创建了 `InfiniteRecursion` 对象，并将其打印出来的时候，你会得到一串很长的异常信息。如果你将该 `InfiniteRecursion` 对象存入一个 `ArrayList` 中，然后打印该 `ArrayList`，同样也会抛出异常。其实，当运行到如下代码时：
+当你创建一个 `InfiniteRecursion` 对象，并将其打印的时候，你会得到一长串的异常信息（`StackOverflowError`）。如果你将该 `InfiniteRecursion` 对象存入一个 `ArrayList` 中，然后打印该 `ArrayList`（如上），也是如此。其实，当运行到如下代码时：
 ```java
 "InfiniteRecursion address: " + this 
 ```
-这里发生了自动类型转换，由 `InfiniteRecursion` 类型转换为 `String` 类型。因为编译器发现一个 `String` 对象后面跟着一个 “+”，而 “+” 后面的对象不是 `String`，于是编译器试着将 `this` 转换成一个 `String`。它怎么转换呢？正是通过调用 `this` 上的 `toString()` 方法，于是就发生了递归调用。
+这里发生了自动类型转换( *automatic type conversion* )，由 `InfiniteRecursion` 类型转换为 `String` 类型。因为编译器发现一个 `String` 对象后面跟着一个 “+”，而 “+” 后面的对象不是 `String`，于是编译器试着将 `this` 转换成一个 `String`。它怎么转换呢？正是通过调用 `this` 上的 `toString()` 方法，于是就发生了递归调用。
 
-如果你真的想要打印对象的内存地址，应该调用 `Object.toString()` 方法，这才是负责此任务的方法。所以，不要使用 `this`，而是应该调用 `super.toString()` 方法。
+如果你真的想要打印对象的内存地址，应该调用 `Object`类的 `toString()` 方法，这才是负责此任务的方法。所以，不要使用 `this`，而是应该调用 `super.toString()` 方法。
 
 
 <!-- Operations on Strings -->
@@ -338,7 +338,7 @@ C 语言的 `printf()` 并不像 Java 那样连接字符串，它使用一个简
 ```c
 System.out.printf("Row 1: [%d %f]%n", x, y);
 ```
-这一行代码在运行的时候，首先将 `x` 的值插入到 `%d_` 的位置，然后将 `y` 的值插入到 `%f` 的位置。这些占位符叫做*格式修饰符*，它们不仅指明了插入数据的位置，同时还指明了将会插入什么类型的变量，以及如何格式化。在这个例子中 `%d` 表示 `x` 是一个整数，`%f` 表示 `y` 是一个浮点数（`float` 或者 `double`）。
+这一行代码在运行的时候，首先将 `x` 的值插入到 `%d_` 的位置，然后将 `y` 的值插入到 `%f` 的位置。这些占位符叫做*格式修饰符*（ format specifiers ），它们不仅指明了插入数据的位置，同时还指明了将会插入什么类型的变量，以及如何格式化。在这个例子中 `%d` 表示 `x` 是一个整数，`%f` 表示 `y` 是一个浮点数（`float` 或者 `double`）。
 ### `System.out.format()`
 Java SE5 引入了 `format()` 方法，可用于 `PrintStream` 或者 `PrintWriter` 对象（你可以在 [附录:流式 I/O](./Appendix-IO-Streams.md) 了解更多内容），其中也包括 `System.out` 对象。`format()` 方法模仿了 C 语言的 `printf()`。如果你比较怀旧的话，也可以使用 `printf()`。以下是一个简单的示例：
 ```java
@@ -409,12 +409,20 @@ Terry The Turtle is at (3,3)
 ```
 格式化修饰符 `%s` 表明这里需要 `String` 参数。
 
-所有的 `tommy` 都将输出到 `System.out`，而所有的 `terry` 则都输出到 `System.out` 的一个别名中。`Formatter` 的重载构造器支持输出到多个路径，不过最常用的还是 `PrintStream()`（如上例）、`OutputStream` 和 `File`。你可以在 [附录:流式 I/O](././Appendix-IO-Streams.md) 中了解更多信息。
+所有的 `tommy` 都将输出到 `System.out`，而所有的 `terry` 则都输出到 `System.out` 的一个别名（outAlias）中。`Formatter` 的重载构造器支持输出到多个路径，不过最常用的还是 `PrintStream()`（如上例）、`OutputStream` 和 `File`。你可以在 [附录:流式 I/O](././Appendix-IO-Streams.md) 中了解更多信息。
 ### 格式化修饰符
 在插入数据时，如果想要优化空格与对齐，你需要更精细复杂的格式修饰符。以下是其通用语法：
 ```java
 %[argument_index$][flags][width][.precision]conversion 
 ```
+
+- argument_index$：指定对应的内容参数位置，默认按照顺序依次对应。
+- flags：格式控制。
+- width：区域宽度。
+- .precision：对于浮点型数据，表示显示的小数位数；对于字符串数据，表示显示的字符数量。
+- conversion：类型转换字符。
+
+
 最常见的应用是控制一个字段的最小长度，这可以通过指定 *width* 来实现。`Formatter `对象通过在必要时添加空格，来确保一个字段至少达到设定长度。默认情况下，数据是右对齐的，不过可以通过使用 `-` 标志来改变对齐方向。
 
 与 *width* 相对的是 *precision*，用于指定最大长度。*width* 可以应用于各种类型的数据转换，并且其行为方式都一样。*precision* 则不然，当应用于不同类型的数据转换时，*precision* 的意义也不同。在将 *precision* 应用于 `String` 时，它表示打印 `string` 时输出字符的最大数量。而在将 *precision* 应用于浮点数时，它表示小数部分要显示出来的位数（默认是 6 位小数），如果小数位数过多则舍入，太少则在尾部补零。由于整数没有小数部分，所以 *precision* 无法应用于整数，如果你对整数应用 *precision*，则会触发异常。
@@ -787,7 +795,7 @@ the mightiest banana in the forest...with... a banana!
 
 | 表达式 | 含义 |
 | :---- | :---- |
-| `B` | 指定字符`B` |
+| `B` | 具体字符`B` |
 | `\xhh` | 十六进制值为`0xhh`的字符 |
 | `\uhhhh` | 十六进制表现为`0xhhhh`的Unicode字符 |
 | `\t` | 制表符Tab |
@@ -817,7 +825,7 @@ the mightiest banana in the forest...with... a banana!
 
 | 逻辑操作符 | 含义 |
 | :----: | :---- |
-| `XY` | `Y`跟在`X`后面 |
+| `XY` | `Y`跟在`X`后面 （X之后是Y）|
 | `X|Y` | `X`或`Y` |
 | `(X)` | 捕获组（capturing group）。可以在表达式中用`\i`引用第i个捕获组 |
 
@@ -854,25 +862,25 @@ true
 ```
 我们的目的并不是编写最难理解的正则表达式，而是尽量编写能够完成任务的、最简单以及最必要的正则表达式。一旦真正开始使用正则表达式了，你就会发现，在编写新的表达式之前，你通常会参考代码中已经用到的正则表达式。
 ### 量词
-量词描述了一个模式捕获输入文本的方式：
+**量词 quantifier** 描述了一个模式（pattern）捕获输入文本的方式：
 
 + **贪婪型**：
-量词总是贪婪的，除非有其他的选项被设置。贪婪表达式会为所有可能的模式发现尽可能多的匹配。导致此问题的一个典型理由就是假定我们的模式仅能匹配第一个可能的字符组，如果它是贪婪的，那么它就会继续往下匹配。
+量词总是贪婪的，除非有其他的选项被设置。贪婪表达式会为所有可能的模式发现尽可能多的匹配。问题的一个典型原因：假定在我们的模式只匹配了第一个字符组的时候，如果它是贪婪的，那么它就会继续直到最多匹配为止。
 
 + **勉强型**：
 用问号来指定，这个量词匹配满足模式所需的最少字符数。因此也被称作懒惰的、最少匹配的、非贪婪的或不贪婪的。
 
 + **占有型**：
-目前，这种类型的量词只有在 Java 语言中才可用（在其他语言中不可用），并且也更高级，因此我们大概不会立刻用到它。当正则表达式被应用于 `String` 时，它会产生相当多的状态，以便在匹配失败时可以回溯。而“占有的”量词并不保存这些中间状态，因此它们可以防止回溯。它们常常用于防止正则表达式失控，因此可以使正则表达式执行起来更高效。
+正则表达式被应用于 `String` 时，会产生相当多的状态，以便在匹配失败时可以回溯。而 **占有型** 量词并不保存这些中间状态，因此它们可以防止回溯。它们常常用于防止正则表达式失控，因此可以使正则表达式执行起来更高效。目前，这种类型的量词只有在 Java 语言中才可用（在其他语言中不可用），并且也更高级，因此我们大概不会立刻用到它。
 
 | 贪婪型 | 勉强型 | 占有型 | 如何匹配 |
 | ---- | ---- | ---- | ---- |
-| `X?` | `X??` | `X?+` | 一个或零个`X` |
-| `X*` | `X*?` | `X*+` | 零个或多个`X` |
-| `X+` | `X+?` | `X++` | 一个或多个`X` |
+| `X?` | `X??` | `X?+` | 零个或一个`X`    相当于{0,1} |
+| `X*` | `X*?` | `X*+` | 零个或多个`X`    相当于{0,} |
+| `X+` | `X+?` | `X++` | 一个或多个`X`    相当于{1,0} |
 | `X{n}` | `X{n}?` | `X{n}+` | 恰好`n`次`X` |
 | `X{n,}` | `X{n,}?` | `X{n,}+` | 至少`n`次`X` |
-| `X{n,m}` | `X{n,m}?` | `X{n,m}+` | `X`至少`n`次，但不超过`m`次 |
+| `X{n,m}` | `X{n,m}?` | `X{n,m}+` | `X`至少`n`次，但不超过`m`次 （左闭右开）|
 
 应该非常清楚地意识到，表达式 `X` 通常必须要用圆括号括起来，以便它能够按照我们期望的效果去执行。例如：
 ```java
@@ -882,7 +890,7 @@ abc+
 ```java
 (abc)+
 ```
-你会发现，在使用正则表达式时很容易混淆，因为它是一种在 Java 之上的新语言。
+你会发现，在使用正则表达式时很容易混淆，因为它是一种在 Java 之上的正交语言。
 ### `CharSequence`
 接口 `CharSequence` 从 `CharBuffer`、`String`、`StringBuffer`、`StringBuilder` 类中抽象出了字符序列的一般化定义：
 ```java
@@ -897,7 +905,11 @@ interface CharSequence {
 ### `Pattern` 和 `Matcher`
 通常，比起功能有限的 `String` 类，我们更愿意构造功能强大的正则表达式对象。只需导入 `java.util.regex`包，然后用 `static Pattern.compile()` 方法来编译你的正则表达式即可。它会根据你的 `String` 类型的正则表达式生成一个 `Pattern` 对象。接下来，把你想要检索的字符串传入 `Pattern` 对象的 `matcher()` 方法。`matcher()` 方法会生成一个 `Matcher` 对象，它有很多功能可用（可以参考 `java.util.regext.Matcher` 的 JDK 文档）。例如，它的 `replaceAll()` 方法能将所有匹配的部分都替换成你传入的参数。
 
-作为第一个示例，下面的类可以用来测试正则表达式，看看它们能否匹配一个输入字符串。第一个控制台参数是将要用来搜索匹配的输入字符串，后面的一个或多个参数都是正则表达式，它们将被用来在输入的第一个字符串中查找匹配。在Unix/Linux上，命令行中的正则表达式必须用引号括起来。这个程序在测试正则表达式时很有用，特别是当你想验证它们是否具备你所期待的匹配功能的时候。[^3]
+作为第一个示例，下面的类可以用来测试正则表达式，看看它们能否匹配一个输入字符串。
+- 第一个控制台参数（`args[0]`）是将要用来搜索匹配的输入字符串，
+- 后面的一个或多个参数都是正则表达式，它们将被用来在输入的第一个字符串中查找匹配。
+
+在Unix/Linux上，命令行中的正则表达式必须用引号括起来。这个程序在测试正则表达式时很有用，特别是当你想验证它们是否具备你所期待的匹配功能的时候。[^3]
 ```java
 // strings/TestRegularExpression.java 
 // Simple regular expression demonstration 
@@ -952,12 +964,13 @@ static boolean matches(String regex, CharSequence input)
 
 通过调用 `Pattern.matcher()` 方法，并传入一个字符串参数，我们得到了一个 `Matcher` 对象。使用 `Matcher` 上的方法，我们将能够判断各种不同类型的匹配是否成功：
 ```java
-boolean matches() 
-boolean lookingAt() 
-boolean find() 
-boolean find(int start)
+boolean matches() //（整个匹配，只有整个字符序列完全匹配成功，才返回True，否则返回False。但如果部分匹配成功，Matcher下次搜的起始位置为这次匹配的末端位置。）
+boolean lookingAt() //（部分匹配，总是从第一个字符进行搜,匹配成功了不再继续匹配，匹配失败了,也不继续匹配。）
+boolean find() //（部分匹配，从当前位置开始搜，找到一个匹配的子串，Matcher下次搜的起始位置为这次匹配的末端位置。）
+boolean find(int start) //（部分匹配，从入参位置开始搜，找到一个匹配的子串，Matcher下次搜的起始位置为这次匹配的末端位置。）
 ```
-其中的 `matches()` 方法用来判断整个输入字符串是否匹配正则表达式模式，而 `lookingAt()` 则用来判断该字符串（不必是整个字符串）的起始部分是否能够匹配模式。
+其中的 `matches()` 方法用来判断整个输入字符串是否匹配正则表达式模式。
+而 `lookingAt()` 则用来判断该字符串（不必是整个字符串）的起始部分是否能够匹配模式。
 ### `find()`
 `Matcher.find()` 方法可用来在 `CharSequence` 中查找多个匹配。例如：
 
@@ -982,12 +995,10 @@ public class Finding {
 }
 /* Output: 
 Evening is full of the linnet s wings
-Evening vening ening ning ing ng g is is s full full 
-ull ll l of of f the the he e linnet linnet innet nnet 
-net et t s s wings wings ings ngs gs s 
+Evening vening ening ning ing ng g is is s full full ull ll l of of f the the he e linnet linnet innet nnet net et t s s wings wings ings ngs gs s 
 */
 ```
-模式 `\\w+` 将字符串划分为词。`find()` 方法像迭代器那样向前遍历输入字符串。而第二个重载的 `find()` 接收一个整型参数，该整数表示字符串中字符的位置，并以其作为搜索的起点。从结果可以看出，后一个版本的 `find()` 方法能够根据其参数的值，不断重新设定搜索的起始位置。
+模式 `\\w+` 将输入分组为词语。`find()` 方法像迭代器那样向前遍历这个输入的字符串。而第二个重载的 `find()` 接收一个整型参数，该整数表示字符串中字符的位置，并以其作为搜索的起点。从结果可以看出，后一个版本的 `find()` 方法能够根据其参数的值，不断重新设定搜索的起始位置。
 ### 组（Groups）
 组是用括号划分的正则表达式，可以根据组的编号来引用某个组。组号为 0 表示整个表达式，组号 1 表示被第一对括号括起来的组，以此类推。因此，下面这个表达式，
 ```java
