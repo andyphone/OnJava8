@@ -20,7 +20,7 @@ RTTI 把我们从只能在编译期进行面向类型操作的禁锢中解脱了
 
 ![多态例子Shape的类层次结构图](../images/image-20190409114913825-4781754.png)
 
-这是一个典型的类层次结构图，基类位于顶部，派生类向下扩展。面向对象编程的一个基本目的是：让代码只操纵对基类(这里即 `Shape` )的引用。这样，如果你想添加一个新类(比如从 `Shape` 派生出 `Rhomboid`)来扩展程序，就不会影响原来的代码。在这个例子中，`Shape` 接口中动态绑定了 `draw()` 方法，这样做的目的就是让客户端程序员可以使用泛化的 `Shape` 引用来调用 `draw()`。`draw()` 方法在所有派生类里都会被覆盖，而且由于它是动态绑定的，所以即使通过 `Shape` 引用来调用它，也能产生恰当的行为，这就是多态。
+这是一个典型的类层次结构图，基类位于顶部，派生类向下扩展。面向对象编程的一个基本目的是：让代码只操纵对基类(这里即 `Shape` )的引用。这样，如果你想添加一个新类(比如从 `Shape` 派生出 `Rhomboid`)来扩展程序，就不会影响原来的代码。在这个例子中，`Shape` 接口中动态绑定了 `draw()` 方法，这样做的目的就是让客户端程序员可以使用泛化的 `Shape` 引用来调用 `draw()`。`draw()` 方法在所有派生类里都会被重写，而且由于它是动态绑定的，所以即使通过 `Shape` 引用来调用它，也能产生恰当的行为，这就是多态。
 
 因此，我们通常会创建一个具体的对象(`Circle`、`Square` 或者 `Triangle`)，把它向上转型成 `Shape` (忽略对象的具体类型)，并且在后面的程序中使用 `Shape` 引用来调用在具体对象中被重载的方法（如 `draw()`）。
 
@@ -68,7 +68,7 @@ Square.draw()
 Triangle.draw()
 ```
 
-基类中包含 `draw()` 方法，它通过传递 `this` 参数传递给 `System.out.println()`，间接地使用 `toString()` 打印类标识符(注意：这里将 `toString()` 声明为 `abstract`，以此强制继承者覆盖该方法，并防止对 `Shape` 的实例化)。如果某个对象出现在字符串表达式中(涉及"+"和字符串对象的表达式)，`toString()` 方法就会被自动调用，以生成表示该对象的 `String`。每个派生类都要覆盖（从 `Object` 继承来的）`toString()` 方法，这样 `draw()` 在不同情况下就打印出不同的消息(多态)。
+基类中包含 `draw()` 方法，它通过传递 `this` 参数传递给 `System.out.println()`，间接地使用 `toString()` 打印类标识符(注意：这里将 `toString()` 声明为 `abstract`，以此强制继承者重写该方法，并防止对 `Shape` 的实例化)。如果某个对象出现在字符串表达式中(涉及"+"和字符串对象的表达式)，`toString()` 方法就会被自动调用，以生成表示该对象的 `String`。每个派生类都要重写（从 `Object` 继承来的）`toString()` 方法，这样 `draw()` 在不同情况下就打印出不同的消息(多态)。
 
 这个例子中，在把 `Shape` 对象放入 `Stream<Shape>` 中时就会进行向上转型(隐式)，但在向上转型的时候也丢失了这些对象的具体类型。对 `stream` 而言，它们只是 `Shape` 对象。
 
@@ -156,7 +156,12 @@ After creating Cookie
 Class.forName("Gum");
 ```
 
-所有 `Class` 对象都属于 `Class` 类，而且它跟其他普通对象一样，我们可以获取和操控它的引用(这也是类加载器的工作)。`forName()` 是 `Class` 类的一个静态方法，我们可以使用 `forName()` 根据目标类的类名（`String`）得到该类的 `Class` 对象。上面的代码忽略了 `forName()` 的返回值，因为那个调用是为了得到它产生的“副作用”。从结果可以看出，`forName()` 执行的副作用是如果 `Gum` 类没有被加载就加载它，而在加载的过程中，`Gum` 的 `static` 初始化块被执行了。
+所有 `Class` 对象都属于 `Class` 类，而且它跟其他普通对象一样，我们可以获取和操控它的引用(这也是类加载器的工作)。得到`Class` 对象的其中一种做法是使用`forName()`。`forName()` 是 `Class` 类的一个静态方法，我们可以使用 `forName()` 根据目标类的类名（`String`类型，注意拼写和大写）得到目标类的 `Class` 对象。上面的代码忽略了 `forName()` 的返回值，因为那个调用是为了得到它产生的“副作用”。从结果可以看出，`forName()` 执行的副作用是：如果 `Gum` 类没有被加载就加载它，而在加载的过程中，`Gum` 的 `static` 初始化块被执行了。
+
+- Class.forName除了将类的.class文件加载到jvm中之外，还会对类进行解释，执行类中的static块。
+- 而classloader只干一件事情，就是将.class文件加载到jvm中，不会执行static中的内容，只有在newInstance才会去执行static块。
+- Class.forName(name,initialize,loader)带参数也可控制是否加载static块。并且只有调用了newInstance()方法采用调用构造函数，创建类的对象。
+
 
 还需要注意的是，如果 `Class.forName()` 找不到要加载的类，它就会抛出异常 `ClassNotFoundException`。上面的例子中我们只是简单地报告了问题，但在更严密的程序里，就要考虑在异常处理程序中把问题解决掉（具体例子详见[设计模式](./25-Patterns)章节）。
 
@@ -228,16 +233,13 @@ public class ToyTest {
 输出结果：
 
 ```
-Class name: typeinfo.toys.FancyToy is interface?
-[false]
+Class name: typeinfo.toys.FancyToy is interface? [false]
 Simple name: FancyToy
 Canonical name : typeinfo.toys.FancyToy
-Class name: typeinfo.toys.HasBatteries is interface?
-[true]
+Class name: typeinfo.toys.HasBatteries is interface? [true]
 Simple name: HasBatteries
 Canonical name : typeinfo.toys.HasBatteries
-Class name: typeinfo.toys.Waterproof is interface?
-[true]
+Class name: typeinfo.toys.Waterproof is interface? [true]
 Simple name: Waterproof
 Canonical name : typeinfo.toys.Waterproof
 Class name: typeinfo.toys.Shoots is interface? [true]
@@ -248,11 +250,11 @@ Simple name: Toy
 Canonical name : typeinfo.toys.Toy
 ```
 
-`FancyToy` 继承自 `Toy` 并实现了 `HasBatteries`、`Waterproof` 和 `Shoots` 接口。在 `main` 方法中，我们创建了一个 `Class` 引用，然后在 `try` 语句里边用 `forName()` 方法创建了一个 `FancyToy` 的类对象并赋值给该引用。需要注意的是，传递给 `forName()` 的字符串必须使用类的全限定名（包含包名）。
+`FancyToy` 继承自 `Toy` 并实现了 `HasBatteries`、`Waterproof` 和 `Shoots` 接口。在 `main` 方法中，我们创建了一个 `Class` 引用，然后在 `try` 语句里边用 `forName()` 方法创建了一个 `FancyToy` 的类对象并赋值给该引用。需要注意的是，传递给 `forName()` 的字符串必须使用类的全限定名（由于文件不在根目录，因此需要包含包名）。
 
 `printInfo()` 函数使用 `getName()` 来产生完整类名，使用 `getSimpleName()` 产生不带包名的类名，`getCanonicalName()` 也是产生完整类名（除内部类和数组外，对大部分类产生的结果与 `getName()` 相同）。`isInterface()` 用于判断某个 `Class` 对象代表的是否为一个接口。因此，通过 `Class` 对象，你可以得到关于该类型的所有信息。
 
-在主方法中调用的 `Class.getInterfaces()` 方法返回的是存放 `Class` 对象的数组，里面的 `Class` 对象表示的是那个类实现的接口。
+在主方法中调用的 `Class.getInterfaces()` 方法返回的是存放 `Class` 对象的数组。该数组里面的每一个 `Class` 对象，都分别是目标类所实现的每一个接口的`Class` 对象。
 
 另外，你还可以调用 `getSuperclass()` 方法来得到父类的 `Class` 对象，再用父类的 `Class` 对象调用该方法，重复多次，你就可以得到一个对象完整的类继承结构。
 
@@ -312,7 +314,7 @@ Java 还提供了另一种方法来生成类对象的引用：**类字面常量*
 </table>
 </figure>
 
-我的建议是使用 `.class` 的形式，以保持与普通类的一致性。
+我的建议是最好使用 `.class` 的形式，来保持与普通类的一致性。
 
 注意，有一点很有趣：当使用 `.class` 来创建对 `Class` 对象的引用时，不会自动地初始化该 `Class` 对象。为了使用类而做的准备工作实际包含三个步骤：
 
@@ -322,7 +324,7 @@ Java 还提供了另一种方法来生成类对象的引用：**类字面常量*
 
 3. **初始化**。如果该类具有超类，则先初始化超类，执行 `static` 初始化器和 `static` 初始化块。
 
-直到第一次引用一个 `static` 方法（构造器隐式地是 `static`）或者非常量的 `static` 字段，才会进行类初始化。
+直到第一次引用一个 `static` 方法（构造器是隐式的 `static`）或者 **非常量** 的 `static` 字段，才会进行类初始化。
 
 ```java
 // typeinfo/ClassInitialization.java
@@ -386,17 +388,17 @@ After creating Initable3 ref
 
 初始化有效地实现了尽可能的“惰性”，从对 `initable` 引用的创建中可以看到，仅使用 `.class` 语法来获得对类对象的引用不会引发初始化。但与此相反，使用 `Class.forName()` 来产生 `Class` 引用会立即就进行初始化，如 `initable3`。
 
-如果一个 `static final` 值是“编译期常量”（如 `Initable.staticFinal`），那么这个值不需要对 `Initable` 类进行初始化就可以被读取。但是，如果只是将一个字段设置成为 `static` 和 `final`，还不足以确保这种行为。例如，对 `Initable.staticFinal2` 的访问将强制进行类的初始化，因为它不是一个编译期常量。
+如果一个 `static final` 值是“编译期常量”（如 `Initable.staticFinal`），那么这个值不需要对 `Initable` 类进行初始化就可以被读取。但是，如果只是将一个字段设置成为 `static` 和 `final`，并不能保证类初始化一定不会发生。例如，对 `Initable.staticFinal2` 的访问将强制进行类的初始化，因为它不是一个编译期常量。
 
 如果一个 `static` 字段不是 `final` 的，那么在对它访问时，总是要求在它被读取之前，要先进行链接（为这个字段分配存储空间）和初始化（初始化该存储空间），就像在对 `Initable2.staticNonFinal` 的访问中所看到的那样。
 
 ### 泛化的 `Class` 引用
 
-`Class` 引用总是指向某个 `Class` 对象，而 `Class` 对象可以用于产生类的实例，并且包含可作用于这些实例的所有方法代码。它还包含该类的 `static` 成员，因此 `Class` 引用表明了它所指向对象的确切类型，而该对象便是 `Class` 类的一个对象。
+`Class` 引用总是指向某个 `Class` 对象，该 `Class` 对象可以用于产生类的实例，并且包含可作用于这些实例的所有方法代码。它还包含该类的 `static` 成员，因此 `Class` 引用确实表明了它所指向的确切类型： `Class` 类的一个对象。
 
 <!-- > 译者的理解： `Class` 对象是 `Class` 类产生的对象，而再往深一点说，`Class` 类的 `Class` 对象（`Class.class`）也是其本类产生的对象。即一切皆对象，类也是一种对象。 -->
 
-但是，Java 设计者看准机会，将它的类型变得更具体了一些。Java 引入泛型语法之后，我们可以使用泛型对 `Class` 引用所指向的 `Class` 对象的类型进行限定。在下面的实例中，两种语法都是正确的：
+但是，Java 设计者看准机会，使“指向”变得更加具体：允许你使用泛型语法来约束`Class`引用指向的`Class`对象的类型。在下面的例子中，两种语法都是正确的：
 
 ```java
 // typeinfo/GenericClassReferences.java
@@ -420,7 +422,7 @@ public class GenericClassReferences {
 Class<Number> geenericNumberClass = int.class;
 ```
 
-这看起来似乎是起作用的，因为 `Integer` 继承自 `Number`。但事实却是不行，因为 `Integer` 的 `Class` 对象并不是 `Number`的 `Class` 对象的子类（这看起来可能有点诡异，我们将在[泛型](./20-Generics)这一章详细讨论）。
+这看起来似乎是合理的，因为 `Integer` 继承自 `Number`。但事实却是不行，因为 `Integer` 的 `Class` 对象并不是 `Number`的 `Class` 对象的子类（这看起来可能有点诡异，我们将在[泛型](./20-Generics)这一章详细讨论）。
 
 为了在使用 `Class` 引用时放松限制，我们使用了通配符，它是 Java 泛型中的一部分。通配符就是 `?`，表示“任何事物”。因此，我们可以在上例的普通 `Class` 引用中添加通配符，并产生相同的结果：
 
@@ -435,7 +437,7 @@ public class WildcardClassReferences {
 }
 ```
 
-使用 `Class<?>` 比单纯使用 `Class` 要好，虽然它们是等价的，并且单纯使用 `Class` 不会产生编译器警告信息。使用 `Class<?>` 的好处是它表示你并非是碰巧或者由于疏忽才使用了一个非具体的类引用，而是特意为之。
+使用 `Class<?>` 比单纯使用 `Class` 要好，虽然它们是等价的，并且单纯使用 `Class` 不会产生编译器警告信息。使用 `Class<?>` 的好处是它表示你并非是意外或者出于无知才使用了一个非具体的类引用，而是特意为之。
 
 为了创建一个限定指向某种类型或其子类的 `Class` 引用，我们需要将通配符与 `extends` 关键字配合使用，创建一个范围限定。这与仅仅声明 `Class<Number>` 不同，现在做如下声明：
 
@@ -452,7 +454,7 @@ public class BoundedClassReferences {
 }
 ```
 
-向 `Class` 引用添加泛型语法的原因只是为了提供编译期类型检查，因此如果你操作有误，稍后就会发现这点。使用普通的 `Class` 引用你要确保自己不会犯错，因为一旦你犯了错误，就要等到运行时才能发现它，很不方便。
+之所以向 `Class` 引用添加泛型语法，只是为了提供编译期类型检查，所以如果你做错了什么，你会更早发现。使用普通的 `Class` 引用你要确保自己不会犯错，因为一旦你犯了错误，就要等到运行时才能发现它，很不方便。
 
 下面的示例使用了泛型语法，它保存了一个类引用，稍后又用 `newInstance()` 方法产生类的对象：
 
@@ -2473,7 +2475,7 @@ RTTI 允许通过匿名类的引用来获取类型信息。初学者极易误用
 
 然而使用多态机制的方法调用，要求我们拥有基类定义的控制权。因为在你扩展程序的时候，可能会发现基类并未包含我们想要的方法。如果基类来自别人的库，这时 RTTI 便是一种解决之道：可继承一个新类，然后添加你需要的方法。在代码的其它地方，可以检查你自己特定的类型，并调用你自己的方法。这样做不会破坏多态性以及程序的扩展能力，因为这样添加一个新的类并不需要修改程序中的 `switch` 语句。但如果想在程序中增加具有新特性的代码，你就必须使用 RTTI 来检查这个特定的类型。
 
-如果只是为了方便某个特定的类，就将某个特性放进基类里边，这将使得从那个基类派生出的所有其它子类都带有这些可能毫无意义的东西。这会导致接口更加不清晰，因为我们必须覆盖从基类继承而来的所有抽象方法，事情就变得很麻烦。举个例子，现在有一个表示乐器 `Instrument` 的类层次结构。假设我们想清理管弦乐队中某些乐器残留的口水，一种办法是在基类 `Instrument` 中放入 `clearSpitValve()` 方法。但这样做会导致类结构混乱，因为这意味着打击乐器 `Percussion`、弦乐器 `Stringed` 和电子乐器 `Electronic` 也需要清理口水。在这个例子中，RTTI 可以提供一种更合理的解决方案。可以将 `clearSpitValve()` 放在某个合适的类中，在这个例子中是管乐器 `Wind`。不过，在这里你可能会发现还有更好的解决方法，就是将 `prepareInstrument()` 放在基类中，但是初次面对这个问题的读者可能想不到还有这样的解决方案，而误认为必须使用 RTTI。
+如果只是为了方便某个特定的类，就将某个特性放进基类里边，这将使得从那个基类派生出的所有其它子类都带有这些可能毫无意义的东西。这会导致接口更加不清晰，因为我们必须重写从基类继承而来的所有抽象方法，事情就变得很麻烦。举个例子，现在有一个表示乐器 `Instrument` 的类层次结构。假设我们想清理管弦乐队中某些乐器残留的口水，一种办法是在基类 `Instrument` 中放入 `clearSpitValve()` 方法。但这样做会导致类结构混乱，因为这意味着打击乐器 `Percussion`、弦乐器 `Stringed` 和电子乐器 `Electronic` 也需要清理口水。在这个例子中，RTTI 可以提供一种更合理的解决方案。可以将 `clearSpitValve()` 放在某个合适的类中，在这个例子中是管乐器 `Wind`。不过，在这里你可能会发现还有更好的解决方法，就是将 `prepareInstrument()` 放在基类中，但是初次面对这个问题的读者可能想不到还有这样的解决方案，而误认为必须使用 RTTI。
 
 最后一点，RTTI 有时候也能解决效率问题。假设你的代码运用了多态，但是为了实现多态，导致其中某个对象的效率非常低。这时候，你就可以挑出那个类，使用 RTTI 为它编写一段特别的代码以提高效率。然而必须注意的是，不要太早地关注程序的效率问题，这是个诱人的陷阱。最好先让程序能跑起来，然后再去看看程序能不能跑得更快，下一步才是去解决效率问题（比如使用 Profiler）[^5]。
 
