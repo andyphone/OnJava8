@@ -529,7 +529,7 @@ public class GenericToyTest {
 }
 ```
 
-如果你手头的是超类，那编译器将只允许你声明超类引用为“某个类，它是 `FancyToy` 的超类”，就像在表达式 `Class<? super FancyToy>` 中所看到的那样。而不会接收 `Class<Toy>` 这样的声明。这看上去显得有些怪，因为 `getSuperClass()` 方法返回的是基类（不是接口），并且编译器在编译期就知道它是什么类型了（在本例中就是 `Toy.class`），而不仅仅只是"某个类"。不管怎样，正是由于这种含糊性，`up.newInstance` 的返回值不是精确类型，而只是 `Object`。
+如果你使用 `getSuperclass()`，编译器只允许你将超类引用声明为“某个类，它是 `FancyToy` 的超类”（`Class<? super FancyToy>`）。而不会接收 `Class<Toy>` 这样的声明。这看上去有些奇怪，因为 `getSuperClass()` 方法返回的是基类（不是接口），而编译器在编译时就知道这个类是什么——是 `Toy.class`，而不仅仅只是"`FancyToy` 的超类"。不管怎样，由于这种模糊不清，`up.newInstance` 的返回值不是精确类型，而只是 `Object`。
 
 ### `cast()` 方法
 
@@ -551,21 +551,21 @@ public class ClassCasts {
 }
 ```
 
-`cast()` 方法接受参数对象，并将其类型转换为 `Class` 引用的类型。但是，如果观察上面的代码，你就会发现，与实现了相同功能的 `main` 方法中最后一行相比，这种转型好像做了很多额外的工作。
+`cast()` 方法接受参数对象，并将其类型转换为 `Class` 引用的类型。但是，如果观察上面的代码，与实现了相同功能的 `main()` 方法中最后一行相比，这种转型似乎做了很多额外的工作。
 
 `cast()` 在无法使用普通类型转换的情况下会显得非常有用，在你编写泛型代码（你将在[泛型](./20-Generics)这一章学习到）时，如果你保存了 `Class` 引用，并希望以后通过这个引用来执行转型，你就需要用到 `cast()`。但事实却是这种情况非常少见，我发现整个 Java 类库中，只有一处使用了 `cast()`（在 `com.sun.mirror.util.DeclarationFilter` 中）。
 
-Java 类库中另一个没有任何用处的特性就是 `Class.asSubclass()`，该方法允许你将一个 `Class` 对象转型为更加具体的类型。
+Java 类库中另一个没有任何用处的特性： `Class.asSubclass()`，该方法允许你将一个 `Class` 对象转型为更加具体的类型。
 
-## 类型转换检测
+## 类型转换前的检测
 
-直到现在，我们已知的 RTTI 类型包括：
+直至目前，我们已知的 RTTI 的几种形式包括：
 
-1.  传统的类型转换，如 “`(Shape)`”，由 RTTI 确保转换的正确性，如果执行了一个错误的类型转换，就会抛出一个 `ClassCastException` 异常。
+1.  传统的类型转换，如 “`(Shape)`”，由 RTTI 确保转换的正确性，如果执行了错误的类型转换，就会抛出一个 `ClassCastException` 异常。
 
-2.  代表对象类型的 `Class` 对象. 通过查询 `Class` 对象可以获取运行时所需的信息.
+2.  代表对象类型的 `Class` 对象. 通过查询 `Class` 对象可以获得有用的运行时信息。
 
-在 C++ 中，经典的类型转换 “`(Shape)`” 并不使用 RTTI。它只是简单地告诉编译器将这个对象作为新的类型对待. 而 Java 会进行类型检查，这种类型转换一般被称作“类型安全的向下转型”。之所以称作“向下转型”，是因为传统上类继承图是这么画的。将 `Circle` 转换为 `Shape` 是一次向上转型, 将 `Shape` 转换为 `Circle` 是一次向下转型。但是, 因为我们知道 `Circle` 肯定是一个 `Shape`，所以编译器允许我们自由地做向上转型的赋值操作，且不需要任何显式的转型操作。当你给编译器一个 `Shape` 的时候，编译器并不知道它到底是什么类型的 `Shape`——它可能是 `Shape`，也可能是 `Shape` 的子类型，例如 `Circle`、`Square`、`Triangle` 或某种其他的类型。在编译期，编译器只能知道它是 `Shape`。因此，你需要使用显式地进行类型转换，以告知编译器你想转换的特定类型，否则编译器就不允许你执行向下转型赋值。 （编译器将会检查向下转型是否合理，因此它不允许向下转型到实际不是待转型类型的子类类型上）。
+在 C++ 中，经典的类型转换 “`(Shape)`” 并不使用 RTTI。它只是简单地告诉编译器将这个对象作为新的类型对待. 而 Java 会进行类型检查，这种类型转换一般被称作“类型安全的向下转型”。之所以称作“向下转型”，是因为传统上类继承图是这么画的。将 `Circle` 转换为 `Shape` 是一次向上转型, 将 `Shape` 转换为 `Circle` 是一次向下转型。但是, 因为我们知道 `Circle` 肯定是一个 `Shape`，所以编译器允许我们自由地做向上转型的赋值操作，且不需要任何显式的转型操作。当你给编译器一个 `Shape` 的时候，编译器并不知道它到底是什么类型的 `Shape`——它可能是 `Shape`，也可能是 `Shape` 的子类型，例如 `Circle`、`Square`、`Triangle` 或某种其他的类型。在编译期，编译器只能知道它是 `Shape`。因此，你需要使用显式地进行类型转换，以告知编译器你想转换的特定类型，否则编译器就不允许你执行向下转型赋值。 （编译器将会检查向下转型是否合理，因此它不允许向下转型到实际不是子类的类型）。
 
 RTTI 在 Java 中还有第三种形式，那就是关键字 `instanceof`。它返回一个布尔值，告诉我们对象是不是某个特定类型的实例，可以用提问的方式使用它，就像这个样子：
 
@@ -712,7 +712,7 @@ public class Hamster extends Rodent {
 
 我们必须显式地为每一个子类编写无参构造器。因为我们有一个带一个参数的构造器，所以编译器不会自动地为我们加上无参构造器。
 
-接下来，我们需要一个类，它可以随机地创建不同类型的宠物，同时，它还可以创建宠物数组和持有宠物的 `List`。为了使这个类更加普遍适用，我们将其定义为抽象类：
+接下来，我们需要一种方法来随机创建不同类型的宠物，为了方便，它应该还可以创建宠物数组和`List`。为了使这个工具能通过几个不同实现类来“进化”，我们将其定义为抽象类：
 
 ```java
 // typeinfo/pets/PetCreator.java
@@ -739,9 +739,9 @@ public abstract class PetCreator implements Supplier<Pet> {
 }
 ```
 
-抽象的 `types()` 方法需要子类来实现，以此来获取 `Class` 对象构成的 `List`（这是模板方法设计模式的一种变体）。注意，其中类的类型被定义为“任何从 `Pet` 导出的类型”，因此 `newInstance()` 不需要转型就可以产生 `Pet`。`get()` 随机的选取出一个 `Class` 对象，然后可以通过 `Class.newInstance()` 来生成该类的新实例。
+抽象的 `types()` 方法需要子类来实现，以此来获取 `Class` 对象构成的 `List`（这是模板方法设计模式的一种变体）。注意，其中类的类型被定义为“任何从 `Pet` 导出的类型（`Class<? extends Pet>`）”，因此 `newInstance()` 不需要转型就可以产生 `Pet`。`get()` 随机的选取出一个 `Class` 对象，然后可以通过 `Class.newInstance()` 来生成该类的新实例。
 
-在调用 `newInstance()` 时，可能会出现两种异常。在紧跟 `try` 语句块后面的 `catch` 子句中可以看到对它们的处理。异常的名字再次成为了一种对错误类型相对比较有用的解释（`IllegalAccessException` 违反了 Java 安全机制，在本例中，表示默认构造器为 `private` 的情况）。
+在调用 `newInstance()` 时，可能会出现两种异常。在紧跟 `try` 语句块后面的 `catch` 子句中可以看到对它们的处理。异常的名字再次成为了一种对错误类型相对比较有用的解释（ `InstantiationException`系统无法调用无参数的构造函数实例化类；`IllegalAccessException` 违反了 Java 安全机制，在本例中，当默认构造器为 `private` 的时候会出现）。
 
 当你创建 `PetCreator` 的子类时，你需要为 `get()` 方法提供 `Pet` 类型的 `List`。`types()` 方法会简单地返回一个静态 `List` 的引用。下面是使用 `forName()` 的一个具体实现：
 
@@ -914,11 +914,11 @@ typeinfo.pets.Hamster]
 ```
 
 
-在即将到来的 `PetCount3.java` 示例中，我们用所有 `Pet` 类型预先加载一个 `Map`（不仅仅是随机生成的），因此 `ALL_TYPES` 类型的列表是必要的。`types` 列表是 `ALL_TYPES` 类型（使用 `List.subList()` 创建）的一部分，它包含精确的宠物类型，因此用于随机生成 `Pet`。
+在接下来的 `PetCount3.java` 示例中，我们用所有 `Pet` 类型预先加载一个 `Map`，因此 `ALL_TYPES` 类型的列表是必要的（这是为下文准备，而不只为随机生成而准备）。`types` 列表是 `ALL_TYPES` 类型（使用 `List.subList()` 创建）的一部分（子集），它包含精确的宠物类型，因此用于随机生成 `Pet`。
 
 这次，`types` 的创建没有被 `try` 块包围，因为它是在编译时计算的，因此不会引发任何异常，不像 `Class.forName()`。
 
-我们现在在 `typeinfo.pets` 库中有两个 `PetCreator` 的实现。为了提供第二个作为默认实现，我们可以创建一个使用 `LiteralPetCreator` 的 *外观模式*：
+我们现在在 `typeinfo.pets` 库中有两个 `PetCreator` 的实现。为了提供第二个作为默认实现，我们可以创建一个使用 `LiteralPetCreator` 的 *外观模式* （Facade设计模式，又称为门面模式）：
 
 ```java
 // typeinfo/pets/Pets.java
@@ -1046,15 +1046,15 @@ Pug Mouse Cymric
 EgyptianMau=2, Rodent=5, Hamster=1, Manx=7, Pet=20}
 ```
 
-为了计算所有不同类型的 `Pet`，`Counter Map` 预先加载了来自 `LiteralPetCreator.ALL_TYPES` 的类型。如果不预先加载 `Map`，将只计数随机生成的类型，而不是像 `Pet` 和 `Cat` 这样的基本类型。
+为了计数所有不同类型的 `Pet`，`Counter Map` 预先加载了来自 `LiteralPetCreator.ALL_TYPES` 的类型。如果不预先加载 `Map`，最后只会计数随机生成的类型，而不会计数是像 `Pet`、`Cat`、`Dog` 和 `Rodent` 这样的基本的类型。（译者注：意思是，`ALL_TYPES`有两个作用：1.利用其子集来生成随机详细的宠物类型，2.利用其全集来分类计数，分类包括笼统类/基本类，比如Pet=20，是因为生成的所有详细类都归属于Pet，基本类和详细类的计数都会增1）
 
-`isInstance()` 方法消除了对 `instanceof` 表达式的需要。此外，这意味着你可以通过更改 `LiteralPetCreator.types` 数组来添加新类型的 `Pet`；程序的其余部分不需要修改（就像使用 `instanceof` 表达式时那样）。
+`isInstance()` 方法消除了对 `instanceof` 表达式的需要。此外，这意味着你可以通过更改 `LiteralPetCreator.types` 数组来添加新类型的 `Pet`；程序的其余部分不需要修改（就像使用 `instanceof` 表达式时那样）（解耦了！）。
 
-`toString()` 方法被重载，以便更容易读取输出，该输出仍与打印 `Map` 时看到的典型输出匹配。
+`toString()` 方法被重写，以便更容易读取输出，该输出仍与打印 `Map` 时看到的典型输出匹配。
 
 ### 递归计数
 
-`PetCount3.Counter` 中的 `Map` 预先加载了所有不同的 `Pet` 类。我们可以使用 `Class.isAssignableFrom()` 而不是预加载 `Map` ，并创建一个不限于计数 `Pet` 的通用工具：
+`PetCount3.Counter` 中的 `Map` 预加载了所有不同的 `Pet` 类。我们可以使用 `Class.isAssignableFrom()` 来代替预加载 `Map` 这一操作，并创建一个不仅限于计数 `Pet` 的通用工具：
 
 ```java
 // onjava/TypeCounter.java
@@ -1083,8 +1083,7 @@ public class TypeCounter extends HashMap<Class<?>, Integer> {
         Integer quantity = get(type);
         put(type, quantity == null ? 1 : quantity + 1);
         Class<?> superClass = type.getSuperclass();
-        if(superClass != null &&
-               baseType.isAssignableFrom(superClass))
+        if(superClass != null && baseType.isAssignableFrom(superClass))
               countClass(superClass);
     }
 
@@ -1100,7 +1099,7 @@ public class TypeCounter extends HashMap<Class<?>, Integer> {
 }
 ```
 
-`count()` 方法获取其参数的 `Class`，并使用 `isAssignableFrom()` 进行运行时检查，以验证传递的对象实际上属于感兴趣的层次结构。`countClass()` 首先计算类的确切类型。然后，如果 `baseType` 可以从超类赋值，则在超类上递归调用 `countClass()`。
+`count()` 方法获取其参数的 `Class`，并使用 `isAssignableFrom()` 进行运行时检查，以验证传递的对象是否真的属于继承相关的层次结构。`countClass()` 首先对该类的确切类型计数，然后，如果 `baseType` 是该类的超类的父类或同类，则在该类的超类上递归调用 `countClass()`。
 
 ```java
 // typeinfo/PetCount4.java
@@ -1139,11 +1138,11 @@ Mouse=2}
 
 从 `Pet` 层次结构生成对象的问题是，每当向层次结构中添加一种新类型的 `Pet` 时，必须记住将其添加到 `LiteralPetCreator.java` 的条目中。在一个定期添加更多类的系统中，这可能会成为问题。
 
-你可能会考虑向每个子类添加静态初始值设定项，因此初始值设定项会将其类添加到某个列表中。不幸的是，静态初始值设定项仅在首次加载类时调用，因此存在鸡和蛋的问题：生成器的列表中没有类，因此它无法创建该类的对象，因此类不会被加载并放入列表中。
+你可能会考虑向每个子类添加静态初始化块，初始化块会将其类添加到某个列表中。不幸的是，静态初始化块仅在首次加载类时调用，由此产生了先有鸡还是先有蛋的悖论：生成器的列表中没有该类，所以它永远无法创建该类的对象，所以该类不会被加载并放入列表中。
 
-基本上，你必须自己手工创建列表（除非你编写了一个工具来搜索和分析源代码，然后创建和编译列表）。所以你能做的最好的事情就是把列表集中放在一个明显的地方。层次结构的基类可能是最好的地方。
+基本上，你必须亲自创建这个列表（除非你编写了一个工具来搜索和分析源代码，然后创建和编译这个列表）。所以你能做的最好的事情就是把列表集中放在一个中央的、明显的地方。继承层次结构的基类可能是最好的地方。
 
-我们在这里所做的另一个更改是使用*工厂方法*设计模式将对象的创建推迟到类本身。工厂方法可以以多态方式调用，并为你创建适当类型的对象。事实证明，`java.util.function.Supplier` 用 `T get()` 描述了原型工厂方法。协变返回类型允许 `get()` 为 `Supplier` 的每个子类实现返回不同的类型。
+我们在这里所做的另一个更改是使用 *工厂方法 Factory Method* 设计模式——将对象的创建推迟到类本身。工厂方法可以以多态方式调用，并为你创建适当类型的对象。事实证明，`java.util.function.Supplier` 用 `T get()` 描述了原型工厂方法。协变返回类型允许 `get()` 为 `Supplier` 的每个子类实现返回不同的类型。
 
 在本例中，基类 `Part` 包含一个工厂对象的静态列表，列表成员类型为 `Supplier<Part>`。对于应该由 `get()` 方法生成的类型的工厂，通过将它们添加到 `prototypes` 列表向基类“注册”。奇怪的是，这些工厂本身就是对象的实例。此列表中的每个对象都是用于创建其他对象的*原型*：
 
