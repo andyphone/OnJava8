@@ -1330,7 +1330,7 @@ x.getClass().equals(Base.class)) false
 x.getClass().equals(Derived.class)) true
 ```
 
-`test()` 方法使用两种形式的 `instanceof` 对其参数执行类型检查。然后，它获取 `Class` 引用，并使用 `==` 和 `equals()` 测试 `Class` 对象的相等性。令人放心的是，`instanceof` 和 `isInstance()` 产生的结果相同， `equals()` 和 `==` 产生的结果也相同。但测试本身得出了不同的结论。与类型的概念一致，`instanceof` 说的是“你是这个类，还是从这个类派生的类？”。而如果使用 `==` 比较实际的`Class` 对象，则与继承无关 —— 它要么是确切的类型，要么不是。
+`test()` 方法使用两种形式的 `instanceof` 对其参数执行类型检查。然后，它获取 `Class` 引用，并使用 `==` 和 `equals()` 测试 `Class` 对象的相等性。令人放心的是，`instanceof` 和 `isInstance()` 产生的结果相同， `equals()` 和 `==` 产生的结果也相同。但测试本身得出了不同的结论。与类型的概念一致，`instanceof` 说的是“你是这个类，还是从这个类派生的类？”。另一方面，如果使用 `==` 比较实际的`Class` 对象，则与继承无关 —— 其 要么的确是该类型，要么不是。
 
 <!-- Reflection: Runtime Class Information -->
 ## 反射：运行时类信息
@@ -1339,19 +1339,19 @@ x.getClass().equals(Derived.class)) true
 
 起初，这看起来并没有那么大的限制，但是假设你引用了一个不在程序空间中的对象。实际上，该对象的类在编译时甚至对程序都不可用。也许你从磁盘文件或网络连接中获得了大量的字节，并被告知这些字节代表一个类。由于这个类在编译器为你的程序生成代码后很长时间才会出现，你如何使用这样的类？
 
-在传统编程环境中，这是一个牵强的场景。但是，当我们进入一个更大的编程世界时，会有一些重要的情况发生。第一个是基于组件的编程，你可以在应用程序构建器*集成开发环境*中使用*快速应用程序开发*（RAD）构建项目。这是一种通过将表示组件的图标移动到窗体上来创建程序的可视化方法。然后，通过在编程时设置这些组件的一些值来配置这些组件。这种设计时配置要求任何组件都是可实例化的，它公开自己的部分，并且允许读取和修改其属性。此外，处理*图形用户界面*（GUI）事件的组件必须公开有关适当方法的信息，以便 IDE 可以帮助程序员覆写这些事件处理方法。反射提供了检测可用方法并生成方法名称的机制。
+在传统编程环境中，这是一个牵强的场景。但是，当我们进入一个更大的编程世界时，有一些重要的情况发生在这种情况下。第一个是基于组件的编程，你可以在应用程序构建器 *集成开发环境 (Integrated Development Environment IDE)* 中使用 *快速应用程序开发 （Rapid Application Development RAD）* 构建项目。这是一种通过将表示组件的图标移动到窗体上来创建程序的可视化方法。然后，通过在编程时设置这些组件的一些值来配置这些组件。这种【设计时配置】要求任何组件都是可实例化的，它公开自己的部分，并且允许读取和修改其属性。此外，处理*图形用户界面*（*Graphical User Interface* GUI）事件的组件必须公开有关适当方法的信息，以便 IDE 可以帮助程序员重写这些事件处理方法。反射提供了检测可用方法并生成方法名称的机制。
 
-在运行时发现类信息的另一个令人信服的动机是提供跨网络在远程平台上创建和执行对象的能力。这称为*远程方法调用*（RMI），它使 Java 程序的对象分布在许多机器上。这种分布有多种原因。如果你想加速一个计算密集型的任务，你可以把它分解成小块放到空闲的机器上。或者你可以将处理特定类型任务的代码（例如，多层次客户机/服务器体系结构中的“业务规则”）放在特定的机器上，这样机器就成为描述这些操作的公共存储库，并且可以很容易地更改它以影响系统中的每个人。分布式计算还支持专门的硬件，这些硬件可能擅长于某个特定的任务——例如矩阵转换——但对于通用编程来说不合适或过于昂贵。
+在运行时发现类信息的另一个令人信服的动机是提供跨网络在远程平台上创建和执行对象的能力。这称为*远程方法调用*（*Remote Method Invocation* RMI），它使 Java 程序的对象分布在许多机器上。这种分布有多种原因。如果你想加速一个计算密集型的任务，你可以把它分解成小块放到空闲的机器上。或者你可以将处理特定类型任务的代码（例如，多层次客户机/服务器体系结构中的“业务规则”）放在特定的机器上，这样机器就成为描述这些操作的公共存储库，并且可以很容易地更改它以影响系统中的每个人。分布式计算还支持专门的硬件，这些硬件可能擅长于某个特定的任务——例如矩阵转换——但对于通用编程来说不合适或过于昂贵。
 
-类 `Class` 支持*反射*的概念， `java.lang.reflect` 库中包含类 `Field`、`Method` 和 `Constructor`（每一个都实现了 `Member` 接口）。这些类型的对象由 JVM 在运行时创建，以表示未知类中的对应成员。然后，可以使用 `Constructor` 创建新对象，`get()` 和 `set()` 方法读取和修改与 `Field` 对象关联的字段，`invoke()` 方法调用与 `Method` 对象关联的方法。此外，还可以调用便利方法 `getFields()`、`getMethods()`、`getConstructors()` 等，以返回表示字段、方法和构造函数的对象数组。（你可以通过在 JDK 文档中查找类 `Class` 来了解更多信息。）因此，匿名对象的类信息可以在运行时完全确定，编译时不需要知道任何信息。
+`Class`类支持 *反射 reflection* 的概念 和 `java.lang.reflect` 库——该库包含类 `Field`、`Method` 和 `Constructor`（每一个都实现了 `Member` 接口）。这些类型的对象由 JVM 在运行时创建，以表示未知类中的对应成员。然后，可以使用 `Constructor` 创建新对象，`get()` 和 `set()` 方法读取和修改与 `Field` 对象关联的字段，`invoke()` 方法调用与 `Method` 对象关联的方法。此外，还可以调用便利方法 `getFields()`、`getMethods()`、`getConstructors()` 等，以返回表示字段、方法和构造函数的对象数组。（你可以通过在 JDK 文档中查找类 `Class` 来了解更多信息。）因此，匿名对象的类信息可以在运行时完全确定，编译时不需要知道任何信息。
 
-重要的是要意识到反射没有什么魔力。当你使用反射与未知类型的对象交互时，JVM 将查看该对象，并看到它属于特定的类（就像普通的 RTTI）。在对其执行任何操作之前，必须加载 `Class` 对象。因此，该特定类型的 `.class` 文件必须在本地计算机上或通过网络对 JVM 仍然可用。因此，RTTI 和反射的真正区别在于，使用 RTTI 时，编译器在编译时会打开并检查 `.class` 文件。换句话说，你可以用“正常”的方式调用一个对象的所有方法。通过反射，`.class` 文件在编译时不可用；它由运行时环境打开并检查。
+重要的是要意识到反射并没有什么神奇的地方。当你使用反射与未知类型的对象交互时，JVM 将查看该对象，并看到它属于特定的类（就像普通的 RTTI）。在对其执行任何操作之前，必须加载 `Class` 对象。因此，该特定类型的 `.class` 文件仍然必须对 JVM 可用，无论是在本地机器上或在网络上。因此，RTTI 和反射的真正区别在于，使用 RTTI 时，编译器在编译时会打开并检查 `.class` 文件。换句话说，你可以用“正常”的方式调用一个对象的所有方法。通过反射，`.class` 文件在编译时不可用；它由运行时环境打开并检查。
 
 ### 类方法提取器
 
 通常，你不会直接使用反射工具，但它们可以帮助你创建更多的动态代码。反射是用来支持其他 Java 特性的，例如对象序列化（参见[附录：对象序列化](https://lingcoder.github.io/OnJava8/#/book/Appendix-Object-Serialization)）。但是，有时动态提取有关类的信息很有用。
 
-考虑一个类方法提取器。查看类定义的源代码或 JDK 文档，只显示*在该类定义中*定义或重写的方法。但是，可能还有几十个来自基类的可用方法。找到它们既单调又费时[^1]。幸运的是，反射提供了一种方法，可以简单地编写一个工具类自动地向你展示所有的接口：
+考虑一个类方法提取器。当我们在查看类定义的源代码或 JDK 文档的时候，它只显示*在该类定义中*定义或重写的方法。但是，可能还有几十个来自基类的可用方法。找到它们既繁琐又费时[^1]。幸运的是，反射提供了一种方法，可以简单地编写一个工具类自动地向你展示所有的接口：
 
 ```java
 // typeinfo/ShowMethods.java
@@ -1381,24 +1381,19 @@ public class ShowMethods {
             Constructor[] ctors = c.getConstructors();
             if (args.length == 1) {
                 for (Method method : methods)
-                    System.out.println(
-                            p.matcher(
-                                    method.toString()).replaceAll(""));
+                    System.out.println(p.matcher(method.toString()).replaceAll(""));
                 for (Constructor ctor : ctors)
-                    System.out.println(
-                            p.matcher(ctor.toString()).replaceAll(""));
+                    System.out.println(p.matcher(ctor.toString()).replaceAll(""));
                 lines = methods.length + ctors.length;
             } else {
                 for (Method method : methods)
                     if (method.toString().contains(args[1])) {
-                        System.out.println(p.matcher(
-                                method.toString()).replaceAll(""));
+                        System.out.println(p.matcher(method.toString()).replaceAll(""));
                         lines++;
                     }
                 for (Constructor ctor : ctors)
                     if (ctor.toString().contains(args[1])) {
-                        System.out.println(p.matcher(
-                                ctor.toString()).replaceAll(""));
+                        System.out.println(p.matcher(ctor.toString()).replaceAll(""));
                         lines++;
                     }
             }
@@ -1414,10 +1409,8 @@ public class ShowMethods {
 ```
 public static void main(String[])
 public final void wait() throws InterruptedException
-public final void wait(long,int) throws
-InterruptedException
-public final native void wait(long) throws
-InterruptedException
+public final void wait(long,int) throws InterruptedException
+public final native void wait(long) throws InterruptedException
 public boolean equals(Object)
 public String toString()
 public native int hashCode()
@@ -1427,7 +1420,7 @@ public final native void notifyAll()
 public ShowMethods()
 ```
 
-`Class` 方法 `getmethods()` 和 `getconstructors()`  分别返回 `Method` 数组和 `Constructor` 数组。这些类中的每一个都有进一步的方法来解析它们所表示的方法的名称、参数和返回值。但你也可以像这里所做的那样，使用 `toString()`，生成带有整个方法签名的 `String`。代码的其余部分提取命令行信息，确定特定签名是否与目标 `String`（使用 `indexOf()`）匹配，并使用正则表达式（在 [Strings](#ch021.xhtml#strings) 一章中介绍）删除名称限定符。
+`Class` 方法 `getmethods()` 和 `getconstructors()`  分别返回 `Method` 数组和 `Constructor` 数组。这些类中的每一个都有进一步的方法来解析它们所表示的方法的名称、参数和返回值。但你也可以像这里所做的那样，使用 `toString()`，生成带有整个方法签名的 `String`。余下代码则提取命令行信息，使用`contains()`（其内在使用 `indexOf()`）确定特定方法签名是否与入参 `String`匹配，并使用正则表达式（在 [Strings](#ch021.xhtml#strings) 一章中介绍）删除名称限定符。
 
 编译时无法知道 `Class.forName()` 生成的结果，因此所有方法签名信息都是在运行时提取的。如果你研究 JDK 反射文档，你将看到有足够的支持来实际设置和对编译时完全未知的对象进行方法调用（本书后面有这样的例子）。虽然最初你可能认为你永远都不需要这样做，但是反射的全部价值可能会令人惊讶。
 
@@ -1437,17 +1430,17 @@ public ShowMethods()
 java ShowMethods ShowMethods
 ```
 
-输出包含一个 `public` 无参数构造函数，即使未定义构造函数。你看到的构造函数是由编译器自动合成的。如果将 `ShowMethods` 设置为非 `public` 类（即只有包级访问权），则合成的无参数构造函数将不再显示在输出中。自动为合成的无参数构造函数授予与类相同的访问权。
+输出包含有一个 `public` 无参构造函数，即使未定义构造函数。你看到的构造函数是由编译器自动合成的。如果将 `ShowMethods` 设置为非 `public` 类（即变成包级访问权），那么输出中就没有合成的无参构造函数。这是因为合成的无参构造函数也变成了包级访问，是自动被赋予了和类相同的访问权限。
 
 尝试运行 `java ShowMethods java.lang.String`，并附加一个 `char`、`int`、`String` 等参数。
 
-编程时，当你不记得某个类是否有特定的方法，并且不想在 JDK 文档中搜索索引或类层次结构时，或者如果你不知道该类是否可以对 `Color` 对象执行任何操作时，该工具能节省不少时间。
+编程时该工具能节省不少时间——当你不记得某个类是否有特定的方法，并且不想在 JDK 文档中搜索索引或类层次结构时；或者如果你不知道该类是否可以对某个对象，例如 `Color` 对象执行任何操作时。
 
 <!-- Dynamic Proxies -->
 
 ## 动态代理
 
-*代理*是基本的设计模式之一。一个对象封装真实对象，代替其提供其他或不同的操作---这些操作通常涉及到与“真实”对象的通信，因此代理通常充当中间对象。这是一个简单的示例，显示代理的结构：
+*代理 Proxy* 是基本的设计模式之一。它是你插入一个对象来代替“真实”对象，以提供额外的或不同的操作——这些操作通常涉及到与“真实”对象的通信，所以代理通常作为一个中间人。这里有一个简单的示例展示代理的结构：
 
 ```java
 // typeinfo/SimpleProxyDemo.java
@@ -1516,11 +1509,11 @@ somethingElse bonobo
 ```
 
 因为 `consumer()` 接受 `Interface`，所以它不知道获得的是 `RealObject` 还是 `SimpleProxy`，因为两者都实现了 `Interface`。
-但是，在客户端和 `RealObject` 之间插入的 `SimpleProxy` 执行操作，然后在 `RealObject` 上调用相同的方法。
+但是插入在客户端和 `RealObject` 之间的 `SimpleProxy` 会执行操作，然后在 `RealObject` 上调用相同的方法。
 
-当你希望将额外的操作与“真实对象”做分离时，代理可能会有所帮助，尤其是当你想要轻松地启用额外的操作时，反之亦然（设计模式就是封装变更---所以你必须改变一些东西以证明模式的合理性）。例如，如果你想跟踪对 `RealObject` 中方法的调用，或衡量此类调用的开销，该怎么办？你不想这部分代码耦合到你的程序中，而代理能使你可以很轻松地添加或删除它。
+当你希望将【额外的操作】与【“真实对象”】分离时，尤其是当你想要轻松地启用和停止【额外的操作】时，代理可能会有所帮助。（设计模式的要点是封装变更——所以你必须改变一些东西以证明模式的合理性）。例如，如果你想跟踪对 `RealObject` 中方法的调用，或测量这种调用的开销，该怎么办？你不想这部分代码耦合到你的程序中，而代理能使你可以很轻松地添加或删除它。
 
-Java 的*动态代理*更进一步，不仅动态创建代理对象而且动态处理对代理方法的调用。在动态代理上进行的所有调用都被重定向到单个*调用处理程序*，该处理程序负责发现调用的内容并决定如何处理。这是 `SimpleProxyDemo.java` 使用动态代理重写的例子：
+Java 的*动态代理  dynamic proxy* 更进一步，不仅动态创建代理对象，而且动态处理对代理方法的调用。在动态代理上进行的所有调用都被重定向到单个*调用处理程序*  *invocation handler*，该处理程序负责发现调用的内容并决定如何处理。这里是 `SimpleProxyDemo.java` 使用动态代理理念重写的例子：
 
 ```java
 // typeinfo/SimpleDynamicProxy.java
@@ -1535,9 +1528,7 @@ class DynamicProxyHandler implements InvocationHandler {
     }
 
     @Override
-    public Object
-    invoke(Object proxy, Method method, Object[] args)
-            throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         System.out.println(
                 "**** proxy: " + proxy.getClass() +
                         ", method: " + method + ", args: " + args);
@@ -1572,21 +1563,24 @@ class SimpleDynamicProxy {
 ```
 doSomething
 somethingElse bonobo
-**** proxy: class $Proxy0, method: public abstract void
-Interface.doSomething(), args: null
+**** proxy: class typeinfo.$Proxy0, method: public abstract void typeinfo.Interface.doSomething(), args: null
 doSomething
-**** proxy: class $Proxy0, method: public abstract void
-Interface.somethingElse(java.lang.String), args:
-[Ljava.lang.Object;@6bc7c054
+**** proxy: class typeinfo.$Proxy0, method: public abstract void typeinfo.Interface.somethingElse(java.lang.String), args: [Ljava.lang.Object;@3b764bce
   bonobo
 somethingElse bonobo
 ```
 
-可以通过调用静态方法 `Proxy.newProxyInstance()` 来创建动态代理，该方法需要一个类加载器（通常可以从已加载的对象中获取），希望代理实现的接口列表（不是类或抽象类），以及接口  `InvocationHandler` 的一个实现。动态代理会将所有调用重定向到调用处理程序，因此通常为调用处理程序的构造函数提供对“真实”对象的引用，以便一旦执行中介任务便可以转发请求。
+可以通过调用静态方法 `Proxy.newProxyInstance()` 来创建动态代理，该方法的三个参数：
 
-`invoke()` 方法被传递给代理对象，以防万一你必须区分请求的来源---但是在很多情况下都无需关心。但是，在 `invoke()` 内的代理上调用方法时要小心，因为接口的调用是通过代理重定向的。
+- 1.一个类加载器（通常可以从已加载的对象中获取）;
+- 2.希望代理实现的接口列表（不是类或抽象类）;
+- 3.接口  `InvocationHandler` 的一个实现。
 
-通常执行代理操作，然后使用 `Method.invoke()` 将请求转发给被代理对象，并携带必要的参数。这在一开始看起来是有限制的，好像你只能执行一般的操作。但是，可以过滤某些方法调用，同时传递其他方法调用：
+动态代理会将所有调用重定向到调用处理程序 `InvocationHandler`，因此，调用处理程序的构造函数通常被赋予对“真实”对象的引用，以便一旦执行中介任务就可以转发请求。
+
+`invoke()` 方法会被交给代理对象，以防你必须区分请求来自哪里——但是在很多情况下不会在意。然而，在调用 `invoke()` 中的代理方法时要小心，因为通过接口的调用会通过代理对象重定向。
+
+一般来说，你执行代理操作，然后使用`Method.invoke()`将请求转发给代理对象，并传递必要的参数。这最初可能看起来很有局限性，好像你只能执行一般的操作。然而，你可以对某些方法调用进行过滤，而将其他方法传递过去：
 
 ```java
 // typeinfo/SelectingMethods.java
@@ -1602,12 +1596,9 @@ class MethodSelector implements InvocationHandler {
     }
 
     @Override
-    public Object
-    invoke(Object proxy, Method method, Object[] args)
-            throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         if (method.getName().equals("interesting"))
-            System.out.println(
-                    "Proxy detected the interesting method");
+            System.out.println("Proxy detected the interesting method");
         return method.invoke(proxied, args);
     }
 }
@@ -1681,7 +1672,7 @@ boring3
 
 虽然 `Optional` 是 Java 8 为了支持流式编程才引入的，但其实它是一个通用的工具。为了证明这点，在本节中，我们会把它用在普通的类中。因为涉及一些运行时检测，所以把这一小节放在了本章。
 
-实际上，在所有地方都使用 `Optional` 是没有意义的，有时候检查一下是不是 `null` 也挺好的，或者有时我们可以合理地假设不会出现 `null`，甚至有时候检查 `NullPointException` 异常也是可以接受的。`Optional` 最有用武之地的是在那些“更接近数据”的地方，在问题空间中代表实体的对象上。举个简单的例子，很多系统中都有 `Person` 类型，代码中有些情况下你可能没有一个实际的 `Person` 对象（或者可能有，但是你还没用关于那个人的所有信息）。这时，在传统方法下，你会用到一个 `null` 引用，并且在使用的时候测试它是不是 `null`。而现在，我们可以使用 `Optional`：
+在实践中，并非所有地方使用 `Optional` 都有意义的，有时检查一下 `null` 是可接受的，有时可以合理地假设不会出现 `null`，甚至有时通过 `NullPointException` 来检测异常也是可以接受的。`Optional` 最有用武之地的是在那些“更接近数据”的地方，用对象来代表问题空间中的实体。举个简单的例子，很多系统中都有 `Person` 类型，在代码中有些情况下，你可能没有一个实际的人（也许你有，但你还没有这个人的所有信息）。此时，在传统方法下，你会使用一个 `null` 引用，并且在使用的时候测试它是不是 `null`。而现在，我们可以使用 `Optional`：
 
 ```java
 // typeinfo/Person.java
@@ -1747,11 +1738,11 @@ Bob Smith
 Bob Smith 11 Degree Lane, Frostbite Falls, MN
 ```
 
-`Person` 的设计有时候又叫“数据传输对象（DTO，data-transfer object）”。注意，所有字段都是 `public` 和 `final` 的，所以没有 `getter` 和 `setter` 方法。也就是说，`Person` 是不可变的，你只能通过构造器给它赋值，之后就只能读而不能修改它的值（字符串本身就是不可变的，因此你无法修改字符串的内容，也无法给它的字段重新赋值）。如果你想修改一个 `Person`，你只能用一个新的 `Person` 对象来替换它。`empty` 字段在对象创建的时候被赋值，用于快速判断这个 `Person` 对象是不是空对象。
+`Person` 的设计有时候又叫“数据传输对象（DTO，data-transfer object）”。注意，所有字段都是 `public` 和 `final` 的，所以没有 `getter` 和 `setter` 方法。也就是说，`Person` 是不可变的，你只能通过构造器给它赋值，之后就只能读而不能修改它的值（字符串本身就是不可变的，因此你无法修改字符串的内容，也无法给它的字段重新赋值）。如果你想修改一个 `Person`，你只能用一个新的 `Person` 对象来替换它。`empty` 字段在对象创建的时候被赋值，用于快速判断这个 `Person` 对象是否代表一个空对象。
 
-如果想使用 `Person`，就必须使用 `Optional` 接口才能访问它的 `String` 字段，这样就不会意外触发 `NullPointException` 了。
+无论是谁如果想使用 `Person`，就必须使用 `Optional` 接口才能访问它的 `String` 字段，这样就不会意外触发 `NullPointException` 了。
 
-现在假设你已经因你惊人的理念而获得了一大笔风险投资，现在你要招兵买马了，但是在虚位以待时，你可以将 `Person Optional` 对象放在每个 `Position` 上：
+现在假设你已经为你的 "惊人创意 "获得了一大笔风险资金。您已经准备好增补职员，但是在您等待职位被填补的时候，你可以将 `Person Optional` 对象放在每个 `Position` 上：
 
 ```java
 // typeinfo/Position.java
@@ -1829,9 +1820,9 @@ caught EmptyTitleException
 
 `Person` 字段的限制又不太一样：如果你把它的值设为 `null`，程序会自动把将它赋值成一个空的 `Person` 对象。先前我们也用过类似的方法把字段转换成 `Optional`，但这里我们是在返回结果的时候使用 `orElse(new Person())` 插入一个空的 `Person` 对象替代了 `null`。
 
-在 `Position` 里边，我们没有创建一个表示“空”的标志位或者方法，因为 `person` 字段的 `Person` 对象为空，就表示这个 `Position` 是个空缺位置。之后，你可能会发现你必须添加一个显式的表示“空位”的方法，但是正如 YAGNI[^2] (You Aren't Going to Need It，你永远不需要它)所言，在初稿时“实现尽最大可能的简单”，直到程序在某些方面要求你为其添加一些额外的特性，而不是假设这是必要的。
+在 `Position` 里边，我们没有创建一个表示“空”的标志位或者方法，因为 `person` 字段中的，空的 `Person` 对象就表示这个 `Position` 是个空缺位置。在以后，你可能会发现你必须添加一个显式的表示“空位”的方法，但是正如 YAGNI[^2] (You Aren't Going to Need It，你永远不需要它)所言，在初稿时“实现尽最大可能的简单”，直到程序在某些方面要求你为其添加一些额外的特性，而不是假设这是必要的。
 
-请注意，虽然你清楚你使用了 `Optional`，可以免受 `NullPointerExceptions` 的困扰，但是 `Staff` 类却对此毫不知情。
+请注意，`Staff` 类可以完全忽略 `Optional` 的存在（解耦），尽管你清楚你使用了 `Optional`，保护你免受 `NullPointerExceptions` 的困扰。
 
 ```java
 // typeinfo/Staff.java
@@ -1919,7 +1910,7 @@ package onjava;
 public interface Null {}
 ```
 
-如果你用接口取代具体类，那么就可以使用 `DynamicProxy` 来自动地创建 `Null` 对象。假设我们有一个 `Robot` 接口，它定义了一个名字、一个模型和一个描述 `Robot` 行为能力的 `List<Operation>`：
+如果你用接口取代具体类，那么就可以使用 `DynamicProxy` 来自动地创建 `Null` 对象。假设我们有一个 `Robot` 接口，它定义了一个名字、一个型号和一个描述 `Robot` 的行为能力列表 `List<Operation>`：
 
 ```java
 // typeinfo/Robot.java
@@ -2028,7 +2019,7 @@ Slusher can clear the roof
 Slusher clearing roof
 ```
 
-假设存在许多不同类型的 `Robot`，我们想让每种 `Robot` 都创建一个 `Null` 对象来执行一些特殊的操作——在本例中，即提供 `Null` 对象所代表 `Robot` 的确切类型信息。这些信息是通过动态代理捕获的：
+假设存在许多不同类型的 `Robot`，我们希望每个 `Null` 为每个 `Robot` 类型做一些特别的事情——在本例中，即提供 `Null` 对象所代表 `Robot` 的确切类型信息。这些信息是通过动态代理捕获的：
 
 ```java
 // typeinfo/NullRobot.java
@@ -2040,8 +2031,7 @@ import java.util.stream.*;
 
 import onjava.*;
 
-class NullRobotProxyHandler
-        implements InvocationHandler {
+class NullRobotProxyHandler implements InvocationHandler {
     private String nullName;
     private Robot proxied = new NRobot();
 
@@ -2075,8 +2065,7 @@ class NullRobotProxyHandler
 }
 
 public class NullRobot {
-    public static Robot
-    newNullRobot(Class<? extends Robot> type) {
+    public static Robot newNullRobot(Class<? extends Robot> type) {
         return (Robot) Proxy.newProxyInstance(
                 NullRobot.class.getClassLoader(),
                 new Class[] { Null.class, Robot.class },
@@ -2112,11 +2101,14 @@ Robot model: SnowRemovalRobot NullRobot
 
 ### Mock 对象和桩
 
-**Mock 对象**和 **桩（Stub）**在逻辑上都是 `Optional` 的变体。他们都是最终程序中所使用的“实际”对象的代理。不过，Mock 对象和桩都是假扮成那些可以传递实际信息的实际对象，而不是像 `Optional` 那样把包含潜在 `null` 值的对象隐藏。
+**Mock 对象**和 **桩（Stub）**在逻辑上都是 `Optional` 的变体。他们都是最终程序中所使用的“实际”对象的代理。不过，Mock 对象和桩都假装是真实的对象，提供真实的信息，而不是像 `Optional` 那样隐藏【包含潜在 `null` 值的对象】。
 
-Mock 对象和桩之间的的差别在于程度不同。Mock 对象往往是轻量级的，且用于自测试。通常，为了处理各种不同的测试场景，我们会创建出很多 Mock 对象。而桩只是返回桩数据，它通常是重量级的，并且经常在多个测试中被复用。桩可以根据它们被调用的方式，通过配置进行修改。因此，桩是一种复杂对象，它可以做很多事情。至于 Mock 对象，如果你要做很多事，通常会创建大量又小又简单的 Mock 对象。
+Mock 对象和桩之间的的区别是一个程度上的区别。Mock 对象往往是轻量级的，且用于自测试。通常很多 Mock 对象是为了处理各种测试情况而创建的。而桩只是返回桩数据，它通常是重量级的，并且经常在多个测试中被复用。桩可以根据它们被调用的方式，通过配置进行修改。因此，桩是一种复杂对象，它可以做很多事情。至于 Mock 对象，如果你必须做很多事，通常会创建很多小的、简单的 Mock 对象。
+
+当你构建应用程序的测试驱动时，模拟对象能帮助你集中注意力。他们让你专注于你现在正在做的测试，同时推迟对你未创建对象的测试。他们让你专注于你正在测试的对象的部分，忽略你已经测试过或尚未测试的东西。他们还让你专注于你自己的代码，用简单的类代替复杂的框架类。https://zhuanlan.zhihu.com/p/27144800
 
 <!-- Interfaces and Type -->
+
 ## 接口和类型
 
 `interface` 关键字的一个重要目标就是允许程序员隔离组件，进而降低耦合度。使用接口可以实现这一目标，但是通过类型信息，这种耦合性还是会传播出去——接口并不是对解耦的一种无懈可击的保障。比如我们先写一个接口：
