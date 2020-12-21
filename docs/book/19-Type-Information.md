@@ -5,7 +5,7 @@
 
 > RTTI（RunTime Type Information，运行时类型信息）能够在程序运行时发现和使用类型信息
 
-RTTI 把我们从只能在编译期进行面向类型操作的禁锢中解脱了出来，并且让我们可以使用某些非常强大的程序。对 RTTI 的需要，揭示了面向对象设计中许多有趣（并且复杂）的特性，同时也带来了关于如何组织程序的基本问题。
+RTTI （RunTime Type Information）把我们从只能在编译期进行面向类型操作的禁锢中解脱了出来，并且让我们可以使用某些非常强大的程序。对 RTTI 的需要，揭示了面向对象设计中许多有趣（并且复杂）的特性，同时也带来了关于如何组织程序的基本问题。
 
 本章将讨论 Java 是如何在运行时识别对象和类信息的。主要有两种方式：
 
@@ -324,7 +324,7 @@ Java 还提供了另一种方法来生成类对象的引用：**类字面常量*
 
 3. **初始化**。如果该类具有超类，则先初始化超类，执行 `static` 初始化器和 `static` 初始化块。
 
-直到第一次引用一个 `static` 方法（构造器是隐式的 `static`）或者 **非常量** 的 `static` 字段，才会进行类初始化。
+直到第一次引用一个 `static` 方法（构造器是隐式的 `static`）或者 **非常量** 的 `static` 字段，才会进行类初始化。（当我们使用.class的方式时，初始化被延迟到了对静态方法或者是非常数静态域进行首次引用时才执行。）
 
 ```java
 // typeinfo/ClassInitialization.java
@@ -1330,14 +1330,15 @@ x.getClass().equals(Base.class)) false
 x.getClass().equals(Derived.class)) true
 ```
 
-`test()` 方法使用两种形式的 `instanceof` 对其参数执行类型检查。然后，它获取 `Class` 引用，并使用 `==` 和 `equals()` 测试 `Class` 对象的相等性。令人放心的是，`instanceof` 和 `isInstance()` 产生的结果相同， `equals()` 和 `==` 产生的结果也相同。但测试本身得出了不同的结论。与类型的概念一致，`instanceof` 说的是“你是这个类，还是从这个类派生的类？”。另一方面，如果使用 `==` 比较实际的`Class` 对象，则与继承无关 —— 其 要么的确是该类型，要么不是。
+`test()` 方法使用两种形式的 `instanceof` 对其参数执行类型检查。然后，它获取 `Class` 引用，并使用 `==` 和 `equals()` 测试 `Class` 对象的相等性。令人放心的是，`instanceof` 和 `isInstance()` 产生的结果相同， `equals()` 和 `==` 产生的结果也相同。但测试本身得出了不同的结论。与类型的概念一致，`instanceof` 的意思是：“你是这个类，又或者是 从这个类派生的类？”。另一方面，如果使用 `==` 比较实际的`Class` 对象，则与继承无关 —— 其 要么的确是该类型，要么不是。
 
 <!-- Reflection: Runtime Class Information -->
+
 ## 反射：运行时类信息
 
 如果你不知道对象的确切类型，RTTI 会告诉你。但是，有一个限制：必须在编译时知道类型，才能使用 RTTI 检测它，并对信息做一些有用的事情。换句话说，编译器必须知道你使用的所有类。
 
-起初，这看起来并没有那么大的限制，但是假设你引用了一个不在程序空间中的对象。实际上，该对象的类在编译时甚至对程序都不可用。也许你从磁盘文件或网络连接中获得了大量的字节，并被告知这些字节代表一个类。由于这个类在编译器为你的程序生成代码后很长时间才会出现，你如何使用这样的类？
+起初，这看起来并不是什么大的限制，但是假设你引用了一个不在程序空间中的对象。实际上，该对象的类在编译时甚至对程序都不可用。也许你从磁盘文件或网络连接中获得了大量的字节，并被告知这些字节代表一个类。由于这个类在编译器为你的程序生成代码后很长时间才会出现，你如何使用这样的类？
 
 在传统编程环境中，这是一个牵强的场景。但是，当我们进入一个更大的编程世界时，有一些重要的情况发生在这种情况下。第一个是基于组件的编程，你可以在应用程序构建器 *集成开发环境 (Integrated Development Environment IDE)* 中使用 *快速应用程序开发 （Rapid Application Development RAD）* 构建项目。这是一种通过将表示组件的图标移动到窗体上来创建程序的可视化方法。然后，通过在编程时设置这些组件的一些值来配置这些组件。这种【设计时配置】要求任何组件都是可实例化的，它公开自己的部分，并且允许读取和修改其属性。此外，处理*图形用户界面*（*Graphical User Interface* GUI）事件的组件必须公开有关适当方法的信息，以便 IDE 可以帮助程序员重写这些事件处理方法。反射提供了检测可用方法并生成方法名称的机制。
 
@@ -2099,13 +2100,74 @@ Robot model: SnowRemovalRobot NullRobot
 
 无论何时，如果你需要一个空 `Robot` 对象，只需要调用 `newNullRobot()`，并传递需要代理的 `Robot` 的类型。这个代理满足了 `Robot` 和 `Null` 接口的需要，并提供了它所代理的类型的确切名字。
 
-### Mock 对象和桩
+### 模拟对象和桩对象
 
-**Mock 对象**和 **桩（Stub）**在逻辑上都是 `Optional` 的变体。他们都是最终程序中所使用的“实际”对象的代理。不过，Mock 对象和桩都假装是真实的对象，提供真实的信息，而不是像 `Optional` 那样隐藏【包含潜在 `null` 值的对象】。
+**模拟对象 (Mock)** 和 **桩对象 (Stub)** 在逻辑上都是 `Optional` 的变体。他们都是最终程序中所使用的“实际”对象的代理。不过，模拟对象和桩都假装是真实的对象，提供真实的信息，而不是像 `Optional` 那样，去隐藏【包含潜在 `null` 值的对象】。
 
-Mock 对象和桩之间的的区别是一个程度上的区别。Mock 对象往往是轻量级的，且用于自测试。通常很多 Mock 对象是为了处理各种测试情况而创建的。而桩只是返回桩数据，它通常是重量级的，并且经常在多个测试中被复用。桩可以根据它们被调用的方式，通过配置进行修改。因此，桩是一种复杂对象，它可以做很多事情。至于 Mock 对象，如果你必须做很多事，通常会创建很多小的、简单的 Mock 对象。
+模拟对象和桩，它们都是为了同一个目标而出现的，代替依赖部分，让原先的“整合测试”简化为“单元测试”。而它们之间的区别在于程度不同：
 
-当你构建应用程序的测试驱动时，模拟对象能帮助你集中注意力。他们让你专注于你现在正在做的测试，同时推迟对你未创建对象的测试。他们让你专注于你正在测试的对象的部分，忽略你已经测试过或尚未测试的东西。他们还让你专注于你自己的代码，用简单的类代替复杂的框架类。https://zhuanlan.zhihu.com/p/27144800
+- 桩只是返回桩数据，它通常是重量级的，并且经常在多个测试中被复用。桩可以根据它们被调用的方式，通过配置进行修改。因此，桩是一种复杂对象，它可以做很多事。Stubs一般用来stub out那些难于创建或操纵的对象。一个经典的例子就是一个database connection。因此，一般的stub都被发现于系统边界，或者围绕着系统中复杂的对象群。为了建立一个stub，你建立了一个接口的另一种实现，利用简单的数据替换了真实的方法。总结为一句就是： **stub给被调用者（ 方法/模块）制造假的返回值，以便不影响调用者的测试，用于提供测试的条件。**
+- 模拟对象往往是轻量级的，且用于`自我测试（self-testing）`——每个测试用例都能够自行判断其后置条件（postcondition）是否得到满足，并依次来反馈测试的执行是否成功。通常很多模拟对象是为了处理各种测试情况而创建的。如果你需要做很多事，通常会创建很多小而简单的 模拟对象。总结为一句就是： **mock给被测试方法模拟一个预期的效果**。
+
+Here we can begin to see the difference between mocks and stubs. If we were writing a test for this mailing behavior, we might write a simple stub like this.
+
+```java
+public interface MailService {
+  public void send (Message msg);
+}
+public class MailServiceStub implements MailService {
+  private List<Message> messages = new ArrayList<Message>();
+  public void send (Message msg) {
+    messages.add(msg);
+  }
+  public int numberSent() {
+    return messages.size();
+  }
+}                                 
+```
+
+We can then use state verification on the stub like this.
+
+```java
+class OrderStateTester...
+      public void testOrderSendsMailIfUnfilled() {
+            Order order = new Order(TALISKER, 51);
+            MailServiceStub mailer = new MailServiceStub();
+            order.setMailer(mailer);
+            order.fill(warehouse);
+            assertEquals(1, mailer.numberSent());
+      }
+```
+
+Of course this is a very simple test - only that a message has been sent. We've not tested it was sent to the right person, or with the right contents, but it will do to illustrate the point.
+
+Using mocks this test would look quite different.
+
+```java
+class OrderInteractionTester...
+    public void testOrderSendsMailIfUnfilled() {
+            Order order = new Order(TALISKER, 51);
+            Mock warehouse = mock(Warehouse.class);
+            Mock mailer = mock(MailService.class);
+            order.setMailer((MailService) mailer.proxy());
+
+            mailer.expects(once()).method("send");
+            warehouse.expects(once()).method("hasInventory")
+              .withAnyArguments()
+              .will(returnValue(false));
+
+            order.fill((Warehouse) warehouse.proxy());
+	}
+}
+```
+
+In both cases I'm using a test double instead of the real mail service. There is a difference in that the stub uses state verification while the mock uses behavior verification.
+
+In order to use state verification on the stub, I need to make some extra methods on the stub to help with verification. As a result the stub implements `MailService` but adds extra test methods.
+
+Mock objects always use behavior verification, a stub can go either way. Meszaros refers to stubs that use behavior verification as a Test Spy. The difference is in how exactly the double runs and verifies and I'll leave that for you to explore on your own.[Mocks Aren't Stubs]
+
+
 
 <!-- Interfaces and Type -->
 
@@ -2160,9 +2222,9 @@ B
 
 通过使用 RTTI，我们发现 `a` 是用 `B` 实现的。通过将其转型为 `B`，我们可以调用不在 `A` 中的方法。
 
-这样的操作完全是合情合理的，但是你也许并不想让客户端开发者这么做，因为这给了他们一个机会，使得他们的代码与你的代码的耦合度超过了你的预期。也就是说，你可能认为 `interface` 关键字正在保护你，但其实并没有。另外，在本例中使用 `B` 来实现 `A` 这种情况是有公开案例可查的[^3]。
+这样的操作完全是合情合理的，但是你也许并不想让客户端开发者这么做，因为这给了他们一个机会，使得他们的代码与你的代码的耦合度超过了你的预期。也就是说，你可能认为 `interface` 关键字正保护着你，然而并没有。另外，在本例中使用 `B` 来实现 `A` 这种情况是有公开案例可查的[^3]。
 
-一种解决方案是直接声明，如果开发者决定使用实际的类而不是接口，他们需要自己对自己负责。这在很多情况下都是可行的，但“可能”还不够，你或许希望能有一些更严格的控制方式。
+一种解决方案是直接声明，如果开发者决定使用实际的类而不是接口，他们需要自己对自己负责。 在许多情况下，这可能是合理的，但如果这种“可能”还不足够的话，你会用更严格的控制方式。
 
 最简单的方式是让实现类只具有包访问权限，这样在包外部的客户端就看不到它了：
 
