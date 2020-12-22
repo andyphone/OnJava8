@@ -1800,7 +1800,7 @@ public class Erased<T> {
 }
 ```
 
-有时，我们可以对这些问题进行编程，但是有时必须通过引入类型标签来补偿擦除。这意味着为所需的类型显式传递一个 **Class** 对象，以在类型表达式中使用它。
+有时，我们可以对这些问题进行编程，但是有时必须通过引入**类型标签**来补偿擦除。这意味着为所需的类型显式传递一个 **Class** 对象，以在类型表达式中使用它。
 
 例如，由于擦除了类型信息，因此在上一个程序中尝试使用 **instanceof** 将会失败。类型标签可以使用动态 `isInstance()` ：
 
@@ -1922,7 +1922,7 @@ java.lang.InstantiationException: java.lang.Integer
 */
 ```
 
-这样可以编译，但对于 `ClassAsFactory<Integer>` 会失败，这是因为 **Integer** 没有无参构造函数。由于错误不是在编译时捕获的，因此语言创建者不赞成这种方法。他们建议使用显式工厂（**Supplier**）并约束类型，以便只有实现该工厂的类可以这样创建对象。这是创建工厂的两种不同方法：
+这样可以编译，但对于 `ClassAsFactory<Integer>` 会失败，这是因为 **Integer** 没有无参构造函数。由于错误不是在编译时捕获的，因此语言创建者不赞成这种方法。他们建议使用明确的工厂（**Supplier**）并约束类型，以便只有实现该工厂的类可以这样创建对象。这是创建工厂的两种不同方法：
 
 ```java
 // generics/FactoryConstraint.java
@@ -2005,7 +2005,7 @@ public class FactoryConstraint {
 */
 ```
 
-**IntegerFactory** 本身就是通过实现 `Supplier<Integer>` 的工厂。 **Widget** 包含一个内部类，它是一个工厂。还要注意，**Fudge** 并没有做任何类似于工厂的操作，并且传递 `Fudge::new` 仍然会产生工厂行为，因为编译器将对函数方法 `::new` 的调用转换为对 `get()` 的调用。
+**IntegerFactory** 本身就是通过实现 `Supplier<Integer>` 的工厂。 **Widget** 包含一个内部类，它是一个工厂。还要注意，**Fudge** 并没有做任何类似于工厂的操作，而传递 `Fudge::new` 仍然会产生工厂行为，因为编译器将对函数方法 `::new` 的调用转换为对 `get()` 的调用。
 
 另一种方法是模板方法设计模式。在以下示例中，`create()` 是模板方法，在子类中被重写以生成该类型的对象：
 
@@ -2054,7 +2054,7 @@ X
 
 ### 泛型数组
 
-正如在 **Erased.java** 中所看到的，我们无法创建泛型数组。通用解决方案是在试图创建泛型数组的时候使用 **ArrayList** ：
+正如在 **Erased.java** 中所看到的，我们无法创建泛型数组（ `new T[SIZE] `）。通用解决方案是在试图创建泛型数组的时候使用 **ArrayList** ：
 
 ```java
 // generics/ListOfGenerics.java
@@ -2107,7 +2107,7 @@ public class ArrayOfGeneric {
             System.out.println(e.getMessage());
         }
         // Runtime type is the raw (erased) type:
-        gia = (Generic<Integer>[]) new Generic[SIZE];
+        gia = (Generic<Integer>[]) new Generic[SIZE];  //唯一方法
         System.out.println(gia.getClass().getSimpleName());
         gia[0] = new Generic<>();
         //- gia[1] = new Object(); // Compile-time error
@@ -2121,7 +2121,7 @@ Generic[]
 */
 ```
 
-问题在于数组会跟踪其实际类型，而该类型是在创建数组时建立的。因此，即使 `gia` 被强制转换为 `Generic<Integer>[]` ，该信息也仅在编译时存在（并且没有 **@SuppressWarnings** 注解，将会收到有关该强制转换的警告）。在运行时，它仍然是一个 **Object** 数组，这会引起问题。成功创建泛型类型的数组的唯一方法是创建一个已擦除类型的新数组，并将其强制转换。
+问题在于数组会跟踪其实际类型，而该类型是在创建数组时建立的。因此，即使 `gia` 被强转为 `Generic<Integer>[]` ，该信息也仅在编译时存在（并且没有 **@SuppressWarnings** 注解，将会收到有关该强制转换的警告）。在运行时，它仍然是一个 **Object** 数组，这会引起问题。成功创建泛型类型的数组的唯一方法：创建一个已擦除类型的新数组，并将其强制转换。
 
 让我们看一个更复杂的示例。考虑一个包装数组的简单泛型包装器：
 
@@ -2166,9 +2166,9 @@ public class GenericArray<T> {
 */
 ```
 
-和以前一样，我们不能说 `T[] array = new T[sz]` ，所以我们创建了一个 **Object** 数组并将其强制转换。
+和之前一样，我们不能说 `T[] array = new T[sz]` ，所以我们创建了一个 **Object** 数组并将其强制转换。
 
-`rep()` 方法返回一个 `T[]` ，在主方法中它应该是 `gai` 的 `Integer[]`，但是如果调用它并尝试将结果转换为 `Integer[]` 引用，则会得到 **ClassCastException** ，这再次是因为实际的运行时类型为 `Object[]` 。
+`rep()` 方法返回一个 `T[]` ，在主方法中它应该是 `gai` 的 `Integer[]`，但是如果调用它并尝试将结果转换为 `Integer[]` 引用，则会得到 **ClassCastException** ，再一次地，因为实际的运行时类型为 `Object[]` 。
 
 如果再注释掉 **@SuppressWarnings** 注解后编译 **GenericArray.java** ，则编译器会产生警告：
 
@@ -2182,7 +2182,14 @@ Recompile with -Xlint:unchecked for details.
 但是要真正确定，请使用 `-Xlint：unchecked` 进行编译：
 
 ```java
-GenericArray.java:7: warning: [unchecked] unchecked cast    array = (T[])new Object[sz];                 ^  required: T[]  found:    Object[]  where T is a type-variable:    T extends Object declared in class GenericArray 1 warning
+GenericArray.java:7: warning: [unchecked] unchecked cast 
+    array = (T[])new Object[sz]; 
+				^ 
+required: T[] 
+found: Object[] 
+where T is a type-variable:
+	T extends Object declared in class GenericArray
+1 warning
 ```
 
 确实是在抱怨那个强制转换。由于警告会变成噪音，因此，一旦我们确认预期会出现特定警告，我们可以做的最好的办法就是使用 **@SuppressWarnings** 将其关闭。这样，当警告确实出现时，我们将进行实际调查。
