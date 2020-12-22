@@ -529,15 +529,19 @@ public class Fibonacci implements Supplier<Integer> {
 
 如果还想更进一步，编写一个实现了 `Iterable` 的 `Fibnoacci` 生成器。我们的一个选择是重写这个类，令其实现 `Iterable` 接口。不过，你并不是总能拥有源代码的控制权，并且，除非必须这么做，否则，我们也不愿意重写一个类。而且我们还有另一种选择，就是创建一个 *适配器* (Adapter) 来实现所需的接口，我们在前面介绍过这个设计模式。
 
-有多种方法可以实现适配器。例如，可以通过继承来创建适配器类：
+有多种方法可以实现适配器。例如，可以通过继承来创建适配器类 ：
+
+```
+【类适配器模式】新定义一个适配器类，它实现了需求对应的接口，并继承现有的业务类，
+通过在接口方法中显式地调用父类的方法的方式，达到适应新需求同时又复用现有方法代码的目的
+```
 
 ```java
 // generics/IterableFibonacci.java
 // Adapt the Fibonacci class to make it Iterable
 import java.util.*;
 
-public class IterableFibonacci
-extends Fibonacci implements Iterable<Integer> {
+public class IterableFibonacci extends Fibonacci implements Iterable<Integer> {
     private int n;
     public IterableFibonacci(int count) { n = count; }
   
@@ -579,7 +583,7 @@ extends Fibonacci implements Iterable<Integer> {
 
 到目前为止，我们已经研究了参数化整个类。其实还可以参数化类中的方法。类本身可能是泛型的，也可能不是，不过这与它的方法是否是泛型的并没有什么关系。
 
-泛型方法独立于类而改变方法。作为准则，请“尽可能”使用泛型方法。通常将单个方法泛型化要比将整个类泛型化更清晰易懂。
+泛型方法独立于类而改变方法。它的使用准则是：只要条件允许，应该随时随地使用泛型方法。通常将单个方法泛型化要比将整个类泛型化更清晰易懂。
 
 如果方法是 **static** 的，则无法访问该类的泛型类型参数，因此，如果使用了泛型类型参数，则它必须是泛型方法。
 
@@ -617,7 +621,7 @@ GenericMethods
 
 对于泛型类，必须在实例化该类时指定类型参数。使用泛型方法时，通常不需要指定参数类型，因为编译器会找出这些类型。 这称为 *类型参数推断*。因此，对 `f()` 的调用看起来像普通的方法调用，并且 `f()` 看起来像被重载了无数次一样。它甚至会接受 **GenericMethods** 类型的参数。
 
-如果使用基本类型调用 `f()` ，自动装箱就开始起作用，自动将基本类型包装在它们对应的包装类型中。
+如果调用 `f()` 使用了基本类型 ，自动装箱就开始起作用，自动将基本类型包装在它们对应的包装类型中。
 
 <!-- Varargs and Generic Methods -->
 ### 变长参数和泛型方法
@@ -659,12 +663,35 @@ S, T, U, V, W, X, Y, Z]
 
 此处显示的 `makeList()` 方法产生的功能与标准库的 `java.util.Arrays.asList()` 方法相同。
 
-`@SafeVarargs` 注解保证我们不会对变长参数列表进行任何修改，这是正确的，因为我们只从中读取。如果没有此注解，编译器将无法知道这些并会发出警告。
+`@SafeVarargs` 注解保证我们不会对变长参数列表进行任何修改，这是正确的，因为我们只从中读取。如果没有此注解，编译器就无法知道，并发出警告。
+
+```java
+// Mixing generics and varargs can violate type safety!
+static void dangerous(List<String>... stringLists) {
+    List<Integer> intList = List.of(42);
+    Object[] objects = stringLists;
+    objects[0] = intList; // Heap pollution
+    String s = stringLists[0].get(0); // ClassCastException
+}
+//当参数化类型的变量引用不属于该类型的对象时，会发生堆污染（Heap pollution ）
+```
+
+本质上，SafeVarargs注释代表了该方法作者的一个承诺，它是类型安全的（the SafeVarargs annotation constitutes a promise by the author of a method that it is typesafe）。作为对此承诺的交换，编译器同意不会警告用户——调用该方法可能是不安全的。
+
+除非方法实际上是安全的，否则不要使用`@SafeVarargs`注释方法，这点至关重要。所以确保这一点【方法是安全的】需要什么呢？回想一下，在调用方法时会创建一个泛型数组，用来保存可变参数。如果方法没有将任何内容存储到数组中（这会覆盖参数）并且不允许对数组的引用进行转义（这会使不受信任的代码访问数组），那么它就是安全的。换句话说，如果可变参数数组仅用于从调用者向方法传递可变数量的参数——毕竟这是可变参数的目的——那么该方法就是安全的。
+
+决定何时使用SafeVarargs注释的规则很简单：**在每个方法上使用`@SafeVarargs`，使用泛型或参数化类型的可变参数，** 这样其用户就不用承担不必要和令人困惑的编译器警告的负担。这意味着你永远不应该编写像dangerous或toArray这样的不安全的可变参数方法。每次编译器在你控制的方法中警告你可能存在来自泛型可变参数的堆污染时，请检查该方法是否安全。提醒一下，如果符合以下条件，泛型可变参数方法是安全的：
+
+  1、它不会在可变参数数组中存储任何内容。
+  2、它不会使数组（或克隆出来的数组）对不受信任的代码可见。
+
+  请注意，`@SafeVarargs`注释仅对无法覆盖的方法是合法的，因为无法保证每个可能的重写方法都是安全的。在Java 8中，注释仅对静态方法和final的实例方法合法; 在Java 9中，它在private实例方法上也是合法的。
 
 <!-- A General-Purpose Supplier -->
+
 ### 一个泛型的 Supplier
 
-这是一个为任意具有无参构造方法的类生成 **Supplier** 的类。为了减少键入，它还包括一个用于生成 **BasicSupplier** 的泛型方法：
+这是一个类，为任何具有无参构造方法的类生成 **Supplier** 。为了减少键入，它还包括一个用于生成 **BasicSupplier** 的泛型方法：
 
 ```java
 // onjava/BasicSupplier.java
@@ -767,18 +794,15 @@ public class Tuple {
         return new Tuple2<>(a, b);
     }
 
-    public static <A, B, C> Tuple3<A, B, C>
-    tuple(A a, B b, C c) {
+    public static <A, B, C> Tuple3<A, B, C> tuple(A a, B b, C c) {
         return new Tuple3<>(a, b, c);
     }
 
-    public static <A, B, C, D> Tuple4<A, B, C, D>
-    tuple(A a, B b, C c, D d) {
+    public static <A, B, C, D> Tuple4<A, B, C, D> tuple(A a, B b, C c, D d) {
         return new Tuple4<>(a, b, c, d);
     }
 
-    public static <A, B, C, D, E>
-    Tuple5<A, B, C, D, E> tuple(A a, B b, C c, D d, E e) {
+    public static <A, B, C, D, E> Tuple5<A, B, C, D, E> tuple(A a, B b, C c, D d, E e) {
         return new Tuple5<>(a, b, c, d, e);
     }
 }
@@ -814,8 +838,7 @@ public class TupleTest2 {
                 new Vehicle(), new Amphibian(), "hi", 47);
     }
 
-    static Tuple5<Vehicle, Amphibian,
-            String, Integer, Double> k() {
+    static Tuple5<Vehicle, Amphibian, String, Integer, Double> k() {
         return tuple(new Vehicle(), new Amphibian(),
                 "hi", 47, 11.1);
     }
@@ -860,16 +883,14 @@ public class Sets {
         return result;
     }
 
-    public static <T>
-    Set<T> intersection(Set<T> a, Set<T> b) {
+    public static <T> Set<T> intersection(Set<T> a, Set<T> b) {
         Set<T> result = new HashSet<>(a);
         result.retainAll(b);
         return result;
     }
 
     // Subtract subset from superset:
-    public static <T> Set<T>
-    difference(Set<T> superset, Set<T> subset) {
+    public static <T> Set<T> difference(Set<T> superset, Set<T> subset) {
         Set<T> result = new HashSet<>(superset);
         result.removeAll(subset);
         return result;
@@ -884,7 +905,7 @@ public class Sets {
 
 前三个方法通过将第一个参数的引用复制到新的 **HashSet** 对象中来复制第一个参数，因此不会直接修改参数集合。因此，返回值是一个新的 **Set** 对象。
 
-这四种方法代表数学集合操作： `union()` 返回一个包含两个参数并集的 **Set** ， `intersection()` 返回一个包含两个参数集合交集的 **Set** ， `difference()` 从 **superset** 中减去 **subset** 的元素 ，而 `complement()` 返回所有不在交集中的元素的 **Set**。作为显示这些方法效果的简单示例的一部分，下面是一个包含不同水彩名称的 **enum** ：
+这四种方法代表数学集合操作： `union()` 返回一个包含两个参数并集的 **Set** ， `intersection()` 返回一个包含两个参数集合交集的 **Set** ， `difference()` 从 **superset** 中减去 **subset** 后剩余的元素 （差集），而 `complement()` 返回所有不在交集中的元素的 **Set** （交集的补集）。作为显示这些方法效果的简单示例的一部分，下面是一个包含不同水彩名称的 **enum** ：
 
 ```java
 // generics/watercolors/Watercolors.java
@@ -1106,8 +1127,7 @@ import onjava.Tuple4;
 
 import java.util.ArrayList;
 
-public class TupleList<A, B, C, D>
-        extends ArrayList<Tuple4<A, B, C, D>> {
+public class TupleList<A, B, C, D> extends ArrayList<Tuple4<A, B, C, D>> {
     public static void main(String[] args) {
         TupleList<Vehicle, Amphibian, String, Integer> tl =
                 new TupleList<>();
@@ -1237,7 +1257,7 @@ public class Store extends ArrayList<Aisle> {
 <!-- The Mystery of Erasure -->
 ## 泛型擦除
 
-当你开始更深入地钻研泛型时，会发现有大量的东西初看起来是没有意义的。例如，尽管可以说  `ArrayList.class`，但不能说成 `ArrayList<Integer>.class`。考虑下面的情况：
+当你开始更深入地钻研泛型时，会发现有大量的东西初看起来是没有意义的。例如，虽然可以说  `ArrayList.class`，但不能说成 `ArrayList<Integer>.class`。考虑以下情况：
 
 ```java
 // generics/ErasedTypeEquivalence.java
@@ -1299,9 +1319,9 @@ public class LostInformation {
 
 残酷的现实是：
 
-在泛型代码内部，无法获取任何有关泛型参数类型的信息。
+> 在泛型代码内部，无法获取任何有关泛型参数类型的信息。
 
-因此，你可以知道如类型参数标识符和泛型边界这些信息，但无法得知实际的类型参数从而用来创建特定的实例。如果你曾是 C++ 程序员，那么这个事实会让你很沮丧，在使用 Java 泛型工作时，它是必须处理的最基本的问题。
+因此，你可以知道如类型参数标识符和泛型边界这些信息，但无法得知实际的类型参数从而用来创建特定的实例。如果你曾是 C++ 程序员，那么这个事实会让你很沮丧，在使用 Java 泛型工作时，这一事实是必须处理的最基本的问题。
 
 Java 泛型是使用擦除实现的。这意味着当你在使用泛型时，任何具体的类型信息都被擦除了，你唯一知道的就是你在使用一个对象。因此，`List<String>` 和 `List<Integer>` 在运行时实际上是相同的类型。它们都被擦除成原生类型 `List`。
 
@@ -1399,9 +1419,9 @@ public class Manipulator2<T extends HasF> {
 
 边界 `<T extends HasF>` 声明 T 必须是 HasF 类型或其子类。如果情况确实如此，就可以安全地在 **obj** 上调用 `f()` 方法。
 
-我们说泛型类型参数会擦除到它的第一个边界（可能有多个边界，稍后你将看到）。我们还提到了类型参数的擦除。编译器实际上会把类型参数替换为它的擦除，就像上面的示例，**T** 擦除到了 **HasF**，就像在类的声明中用 **HasF** 替换了 **T** 一样。
+我们说泛型类型参数会擦除到它的第一个边界（可能有多个边界，稍后你将看到）【如果泛型参数是有界的, 那么编译之后会替换成边界, 否则的话会替换成`Object`】。我们还提到了类型参数的擦除。编译器实际上会把类型参数替换为它的擦除，因此在上述例子中，**T** 擦除到了 **HasF**，就像在类的声明中用 **HasF** 替换了 **T** 一样。
 
-你可能正确地观察到了泛型在 **Manipulator2.java** 中没有贡献任何事。你可以很轻松地自己去执行擦除，生成没有泛型的类：
+你可能正确地观察到：泛型在 **Manipulator2.java** 中没有任何贡献。你可以很轻松地自己执行擦除，生成没有泛型的类：
 
 ```java
 // generics/Manipulator3.java
@@ -1447,15 +1467,31 @@ public class ReturnGenericType<T extends HasF> {
 
 如果 Java 1.0 就含有泛型的话，那么这个特性就不会使用擦除来实现——它会使用具体化，保持参数类型为第一类实体，因此你就能在类型参数上执行基于类型的语言操作和反射操作。本章稍后你会看到，擦除减少了泛型的泛化性。泛型在 Java 中仍然是有用的，只是不如它们本来设想的那么有用，而原因就是擦除。
 
-在基于擦除的实现中，泛型类型被当作第二类类型处理，即不能在某些重要的上下文使用泛型类型。泛型类型只有在静态类型检测期间才出现，在此之后，程序中的所有泛型类型都将被擦除，替换为它们的非泛型上界。例如， `List<T>` 这样的类型注解会被擦除为 **List**，普通的类型变量在未指定边界的情况下会被擦除为 **Object**。
+第一类对象(First-class Object)在1960年由Christopher Strachey发明，原来称之为一等公民(First-class citizen)，意思是指函数可以作为电脑中的一等公民。英文中也称之为First-class entity或First-class value。
+
+
+> 
+> 闲话：很多资料把 first-class object 翻译成 “第一类对象”，我觉得还是翻译成 “一等对象” 比较好，因为它明显借用了英语中 “一等公民” first-class citizen 的说法。
+
+
+
+第一类对象不一定是指面向对象程序设计中所指的对象，而是指程序中的所有实体(比如：变量、函数、队列、字典等等)。一般第一类对象具有一下特征： 
+
+- 可以被存入变量或其他结构
+- 可以被作为参数传递给其他方法/函数
+- 可以被作为方法/函数的返回值
+- 可以在执行期被创建，而无需在设计期全部写出
+- 有固定身份
+
+在基于擦除的实现中，泛型类型被当作第二类对象类型处理，即不能在某些重要的上下文使用泛型类型。泛型类型只有在静态类型检测期间才出现，在此之后，程序中的所有泛型类型都将被擦除，替换为它们的非泛型上界。例如， `List<T>` 这样的类型注解会被擦除为 **List**，普通的类型变量在未指定边界的情况下会被擦除为 **Object**。
 
 擦除的核心动机是你可以在泛化的客户端上使用非泛型的类库，反之亦然。这经常被称为“迁移兼容性”。在理想情况下，所有事物将在指定的某天被泛化。在现实中，即使程序员只编写泛型代码，他们也必须处理 Java 5 之前编写的非泛型类库。这些类库的作者可能从没想过要泛化他们的代码，或许他们可能刚刚开始接触泛型。
 
 因此 Java 泛型不仅必须支持向后兼容性——现有的代码和类文件仍然合法，继续保持之前的含义——而且还必须支持迁移兼容性，使得类库能按照它们自己的步调变为泛型，当某个类库变为泛型时，不会破坏依赖于它的代码和应用。在确定了这个目标后，Java 设计者们和从事此问题相关工作的各个团队决策认为擦除是唯一可行的解决方案。擦除使得这种向泛型的迁移成为可能，允许非泛型的代码和泛型代码共存。
 
-例如，假设一个应用使用了两个类库 **X** 和 **Y**，**Y** 使用了类库 **Z**。随着 Java 5 的出现，这个应用和这些类库的创建者最终可能希望迁移到泛型上。但是当进行迁移时，它们有着不同的动机和限制。为了实现迁移兼容性，每个类库与应用必须与其他所有的部分是否使用泛型无关。因此，它们不能探测其他类库是否使用了泛型。因此，某个特定的类库使用了泛型这样的证据必须被”擦除“。
+例如，假设一个应用使用了两个类库 **X** 和 **Y**，**Y** 使用了类库 **Z**。随着 Java 5 的出现，这个应用和这些类库的创建者最终可能希望迁移到泛型上。但是当进行迁移时，它们有着不同的动机和限制。为了实现迁移兼容性，每个类库与应用必须与其他所有的部分是否使用泛型无关。因此，它们不能探测其他类库是否使用了泛型。因此，某个特定的类库使用了泛型的证据必须被”擦除“。
 
-如果没有某种类型的迁移途径，所有已经构建了很长时间的类库就需要与希望迁移到 Java 泛型上的开发者们说再见了。类库毫无争议是编程语言的一部分，对生产效率有着极大的影响，所以这种代码无法接受。擦除是否是最佳的或唯一的迁移途径，还待时间来证明。
+如果没有某种类型的迁移途径，所有已经构建了很长时间的类库就需要与选择迁移到 Java 泛型上的开发者们说再见了。类库可以说是编程语言中对生产力影响最大的部分，所以这不是一个可以接受的代价。擦除是否是最好的或唯一的迁移路径，只有时间才能证明。
 
 ### 擦除的问题
 
@@ -1509,7 +1545,7 @@ public class ErasureAndInteritance {
     public static void main(String[] args) {
         Derived2 d2 = new Derived2();
         Object obj = d2.get();
-        d2.set(obj); // Warning here!
+        d2.set(obj); // Warning here! -> Unchecked call to 'set(T)' as a member of raw type 'GenericBase' 
     }
 }
 ```
@@ -1524,13 +1560,13 @@ public class ErasureAndInteritance {
 
 这个注解放置在产生警告的方法上，而不是整个类上。当你要关闭警告时，最好尽可能地“聚焦”，这样就不会因为过于宽泛地关闭警告，而导致意外地遮蔽掉真正的问题。
 
-可以推断，**Derived3** 产生的错误意味着编译器期望得到一个原生基类。
+可以推断，**Derived3** 产生的错误意味着编译器期望得到一个原生基类( No wildcard expected )。
 
 当你希望将类型参数不仅仅当作 Object 处理时，就需要付出额外努力来管理边界，并且与在 C++、Ada 和 Eiffel 这样的语言中获得参数化类型相比，你需要付出多得多的努力来获得少得多的回报。这并不是说，对于大多数的编程问题而言，这些语言通常都会比 Java 更得心应手，只是说它们的参数化类型机制相比 Java 更灵活、更强大。
 
 ### 边界处的动作
 
-因为擦除，我发现了泛型最令人困惑的方面是可以表示没有任何意义的事物。例如：
+因为擦除，我发现了泛型最令人困惑的方面是——可以表示没有任何意义的事物。例如：
 
 ```java
 // generics/ArrayMaker.java
@@ -1561,7 +1597,7 @@ public class ArrayMaker<T> {
 */
 ```
 
-即使 **kind** 被存储为 `Class<T>`，擦除也意味着它实际被存储为没有任何参数的 **Class**。因此，当你在使用它时，例如创建数组，`Array.newInstance()` 实际上并未拥有 **kind** 所蕴含的类型信息。所以它不会产生具体的结果，因而必须转型，这会产生一条令你无法满意的警告。
+即使 **kind** 被存储为 `Class<T>`，擦除也意味着它实际被存储为没有任何参数的 **Class**。因此，当你在使用它时，例如创建数组，`Array.newInstance()` 实际上并未拥有 **kind** 所蕴含的类型信息。所以它不会产生特定类型的结果，因而必须转型，这会产生一条碍眼的警告。
 
 注意，对于在泛型中创建数组，使用 `Array.newInstance()` 是推荐的方式。
 
@@ -1622,7 +1658,7 @@ public class FilledList<T> extends ArrayList<T> {
 
 即使编译器无法得知 `add()` 中的 **T** 的任何信息，但它仍可以在编译期确保你放入 **FilledList** 中的对象是 **T** 类型。因此，即使擦除移除了方法或类中的实际类型的信息，编译器仍可以确保方法或类中使用的类型的内部一致性。
 
-因为擦除移除了方法体中的类型信息，所以在运行时的问题就是*边界*：即对象进入和离开方法的地点。这些正是编译器在编译期执行类型检查并插入转型代码的地点。
+因为擦除移除了方法体中的类型信息，所以在运行时重要的是*边界*：即对象进入和离开方法的地点。这些点正是编译器在编译期执行类型检查并插入转型代码的地方。
 
 考虑如下这段非泛型示例：
 
@@ -1677,7 +1713,7 @@ public static void main(java.lang.String[]);
    22: return
 ```
 
-`set()` 和 `get()` 方法存储和产生值，转型在调用 `get()` 时接受检查。
+`set()` 和 `get()` 方法分别存储和产生值，转型在调用 `get()` 时接受检查。
 
 现在将泛型融入上例代码中：
 
@@ -1732,9 +1768,9 @@ public static void main(java.lang.String[]);
    22: return
 ```
 
-所产生的字节码是相同的。对进入 `set()` 的类型进行检查是不需要的，因为这将由编译器执行。而对 `get()` 返回的值进行转型仍然是需要的，只不过不需要你来操作，它由编译器自动插入，这样你就不用编写（阅读）杂乱的代码。
+所产生的字节码是相同的。对进入 `set()` 的类型进行检查是不需要的，因为这将由编译器执行。而对 `get()` 返回的值进行转型仍然是需要的，只不过不需要你来操作，它由编译器自动插入，这样你就不用编写和阅读杂乱的代码。
 
-`get()` 和 `set()` 产生了相同的字节码，这就告诉我们泛型的所有动作都发生在边界处——对入参的编译器检查和对返回值的转型。这有助于澄清对擦除的困惑，记住：“边界就是动作发生的地方”。
+`get()` 和 `set()` 产生了相同的字节码，这就告诉我们泛型的所有动作都发生在边界——编译时对入参的额外检查，以及对返回值的插入转类型。记住：“边界就是动作发生的地方”，这有助于解除对擦除的疑惑。
 
 <!-- Compensating for Erasure -->
 
