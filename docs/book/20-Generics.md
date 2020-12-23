@@ -834,13 +834,11 @@ public class TupleTest2 {
     }
 
     static Tuple4<Vehicle, Amphibian, String, Integer> h() {
-        return tuple(
-                new Vehicle(), new Amphibian(), "hi", 47);
+        return tuple(new Vehicle(), new Amphibian(), "hi", 47);
     }
 
     static Tuple5<Vehicle, Amphibian, String, Integer, Double> k() {
-        return tuple(new Vehicle(), new Amphibian(),
-                "hi", 47, 11.1);
+        return tuple(new Vehicle(), new Amphibian(), "hi", 47, 11.1);
     }
 
     public static void main(String[] args) {
@@ -1922,7 +1920,7 @@ java.lang.InstantiationException: java.lang.Integer
 */
 ```
 
-这样可以编译，但对于 `ClassAsFactory<Integer>` 会失败，这是因为 **Integer** 没有无参构造函数。由于错误不是在编译时捕获的，因此语言创建者不赞成这种方法。他们建议使用明确的工厂（**Supplier**）并约束类型，以便只有实现该工厂的类可以这样创建对象。这是创建工厂的两种不同方法：
+这样可以编译，但对于 `ClassAsFactory<Integer>` 会失败，这是因为 **Integer** 没有无参构造函数。由于错误不是在编译时捕获的，因此语言创建者不赞成这种方法。他们建议使用明确的工厂（**Supplier**）并约束类型，以便只有实现该工厂的类可以这样创建对象。下面是创建工厂的 2 种不同方法：
 
 ```java
 // generics/FactoryConstraint.java
@@ -2119,9 +2117,32 @@ public class ArrayOfGeneric {
 [Ljava.lang.Object; cannot be cast to [LGeneric;
 Generic[]
 */
+//String型数组的类型是用“[Ljava.lang.String”，数组类型的表示：
+//   a. " [ "表示一维数组， "[[ "二维数组
+//   b. "L"代表这个数组是引用数据类型的数组. "java.lang.String"是数组元素的类型,标识这个数组是什么类型的数组.基本数据类型的每种类型都有自已对应的标识符，如int[] 的类型是"[I"表示它是int型的数组
 ```
 
 问题在于数组会跟踪其实际类型，而该类型是在创建数组时建立的。因此，即使 `gia` 被强转为 `Generic<Integer>[]` ，该信息也仅在编译时存在（并且没有 **@SuppressWarnings** 注解，将会收到有关该强制转换的警告）。在运行时，它仍然是一个 **Object** 数组，这会引起问题。成功创建泛型类型的数组的唯一方法：创建一个已擦除类型的新数组，并将其强制转换。
+
+```java
+try {
+  Object obj = new Object();
+  String str = (String)obj;  //如果一个[Ljava.lang.Object 类型的实例并不指向[Ljava.lang.String类型的对象，强转肯定报错
+} catch (Exception e) {
+  System.err.println("not OK!  "+e);
+}
+
+try {
+  String str = new String();
+  Object obj = str;
+  String str2 = (String)obj;
+  System.err.println("OK!");
+} catch (Exception e) {
+  System.err.println(e);
+}
+//not OK!  java.lang.ClassCastException: java.lang.Object cannot be cast to java.lang.String
+//OK!
+```
 
 让我们看一个更复杂的示例。考虑一个包装数组的简单泛型包装器：
 
@@ -2168,7 +2189,7 @@ public class GenericArray<T> {
 
 和之前一样，我们不能说 `T[] array = new T[sz]` ，所以我们创建了一个 **Object** 数组并将其强制转换。
 
-`rep()` 方法返回一个 `T[]` ，在主方法中它应该是 `gai` 的 `Integer[]`，但是如果调用它并尝试将结果转换为 `Integer[]` 引用，则会得到 **ClassCastException** ，再一次地，因为实际的运行时类型为 `Object[]` 。
+`rep()` 方法返回一个 `T[]` ，在主方法中它应该是 `gai` 的 `Integer[]`，但是如果调用它并尝试将结果转换为 `Integer[]` 引用，则会得到 **ClassCastException** ，这又是因为实际的运行时类型为 `Object[]` 。
 
 如果再注释掉 **@SuppressWarnings** 注解后编译 **GenericArray.java** ，则编译器会产生警告：
 
@@ -2192,7 +2213,7 @@ where T is a type-variable:
 1 warning
 ```
 
-确实是在抱怨那个强制转换。由于警告会变成噪音，因此，一旦我们确认预期会出现特定警告，我们可以做的最好的办法就是使用 **@SuppressWarnings** 将其关闭。这样，当警告确实出现时，我们将进行实际调查。
+确实是在抱怨那个强制转换。由于警告会变成噪音，因此，一旦我们确认预期会出现特定警告，最好的办法就是使用 **@SuppressWarnings** 将其关闭。这样，当警告确实出现时，我们将进行实际调查。
 
 由于擦除，数组的运行时类型只能是 `Object[]` 。 如果我们立即将其转换为 `T[]` ，则在编译时会丢失数组的实际类型，并且编译器可能会错过一些潜在的错误检查。因此，最好在集合中使用 `Object[]` ，并在使用数组元素时向 **T** 添加强制类型转换。让我们来看看在 **GenericArray.java** 示例中会是怎么样的：
 
@@ -2236,13 +2257,12 @@ public class GenericArray2<T> {
     }
 }
 /* Output:
-0 1 2 3 4 5 6 7 8 9
-java.lang.ClassCastException: [Ljava.lang.Object;
-cannot be cast to [Ljava.lang.Integer;
+0 1 2 3 4 5 6 7 8 9 
+java.lang.ClassCastException: [Ljava.lang.Object; cannot be cast to [Ljava.lang.Integer;
 */
 ```
 
-最初，看起来并没有太大不同，只是转换的位置移动了。没有 **@SuppressWarnings** 注解，仍然会收到“unchecked”警告。但是，内部表示现在是 `Object[]` 而不是 `T[]` 。 调用 `get()` 时，它将对象强制转换为 **T** ，实际上这是正确的类型，因此很安全。但是，如果调用 `rep()` ，它将再次尝试将 `Object[]` 强制转换为 `T[]` ，但仍然不正确，并在编译时生成警告，并在运行时生成异常。因此，无法破坏基础数组的类型，该基础数组只能是 `Object[]` 。在内部将数组视为 `Object[]` 而不是 `T[]` 的优点是，我们不太可能会忘记数组的运行时类型并意外地引入了bug，尽管大多数（也许是全部）此类错误会在运行时被迅速检测到。
+最初，看起来并没有太大不同，只是转换的位置移动了。没有 **@SuppressWarnings** 注解，仍然会收到“unchecked”警告。但是，内部表示现在是 `Object[]` 而不是 `T[]` 。 调用 `get()` 时，它将对象强制转换为 **T** ，实际上这是正确的类型，因此很安全。但是，如果调用 `rep()` ，它将再次尝试将 `Object[]` 强制转换为 `T[]` ，但仍然不正确，并在编译时生成警告，并在运行时生成异常。因此，无法破坏基础数组的类型，该基础数组只能是 `Object[]` 。在内部将数组视为 `Object[]` 而不是 `T[]` 的优点是，我们不太可能会遗忘数组的运行时类型并意外地引入bug，而且这些bug大多数（也许是全部）会在运行时被迅速检测到。
 
 对于新代码，请传入类型标记。在这种情况下，**GenericArray** 如下所示：
 
@@ -2305,15 +2325,15 @@ Note: Recompile with -Xlint:unchecked for details.
 
 Neal Gafter（Java 5 的主要开发人员之一）在他的博客中[^2]指出，他在重写 Java 库时是很随意、马虎的，我们不应该像他那样做。Neal 还指出，他在不破坏现有接口的情况下无法修复某些 Java 库代码。因此，即使在 Java 库源代码中出现了一些习惯用法，它们也不一定是正确的做法。当查看库代码时，我们不能认为这就是要在自己代码中必须遵循的示例。
 
-请注意，在 Java 文献中推荐使用类型标记技术，例如 Gilad Bracha 的论文《Generics in the Java Programming Language》[^3]，他指出：“例如，这种用法已广泛用于新的 API 中以处理注解。” 我发现此技术在人们对于舒适度的看法方面存在一些不一致之处；有些人强烈喜欢本章前面介绍的工厂方法。
+请注意，在 Java 文献中推荐使用类型标记技术，例如 Gilad Bracha 的论文《Generics in the Java Programming Language》[^3]，他指出：“这种用法已广泛用于新的 API 中，例如用来处理注解。” 我发现此技术在人们对于舒适度的看法方面存在一些不一致之处；有些人强烈喜欢本章前面介绍的工厂方法。
 
 <!-- Bounds -->
 
 ## 边界
 
-*边界*（bounds）在本章的前面进行了简要介绍。边界允许我们对泛型使用的参数类型施加约束。尽管这可以强制执行有关应用了泛型类型的规则，但潜在的更重要的效果是我们可以在绑定的类型中调用方法。
+*边界*（bounds）在本章的前面进行了简要介绍。边界允许我们对泛型使用的参数类型施加约束。这可以强制执行适用于某泛型的规则，而更重要的潜在效果是我们可以在绑定的类型中调用方法。
 
-由于擦除会删除类型信息，因此唯一可用于无限制泛型参数的方法是那些 **Object** 可用的方法。但是，如果将该参数限制为某类型的子集，则可以调用该子集中的方法。为了应用约束，Java 泛型使用了 `extends` 关键字。
+由于擦除会删除类型信息，所以对于一个无约束的泛型参数，你只能调用那些 **Object** 可用的方法。但是，如果将该参数限制为某类型的子集，则可以调用该子集中的方法。为了施加约束，Java 泛型重用了 `extends` 关键字。
 
 重要的是要理解，当用于限定泛型类型时，`extends` 的含义与通常的意义截然不同。此示例展示边界的基础应用：
 
@@ -2348,7 +2368,7 @@ class Coord {
 // This fails. Class must be first, then interfaces:
 // class WithColorCoord<T extends HasColor & Coord> {
 
-// Multiple bounds:
+// Multiple bounds: 多个边界，类放在前，接口放在后
 class WithColorCoord<T extends Coord & HasColor> {
     T item;
 
@@ -2382,7 +2402,7 @@ interface Weight {
 }
 
 // As with inheritance, you can have only one
-// concrete class but multiple interfaces:
+// concrete class but multiple interfaces:  一个实体类 和两个接口
 class Solid<T extends Coord & HasColor & Weight> {
     T item;
 
@@ -2415,8 +2435,7 @@ class Solid<T extends Coord & HasColor & Weight> {
     }
 }
 
-class Bounded
-        extends Coord implements HasColor, Weight {
+class Bounded extends Coord implements HasColor, Weight {
     @Override
     public java.awt.Color getColor() {
         return null;
@@ -2439,7 +2458,7 @@ public class BasicBounds {
 }
 ```
 
-你可能会观察到 **BasicBounds.java** 中似乎包含一些冗余，它们可以通过继承来消除。在这里，每个继承级别还添加了边界约束：
+你可能会观察到 **BasicBounds.java** 中似乎包含一些冗余，它们可以通过继承来消除（如下）。在这里每个继承级别还添加了边界约束：
 
 ```java
 // generics/InheritBounds.java
@@ -2456,8 +2475,7 @@ class HoldItem<T> {
     }
 }
 
-class WithColor2<T extends HasColor>
-        extends HoldItem<T> {
+class WithColor2<T extends HasColor> extends HoldItem<T> {
     WithColor2(T item) {
         super(item);
     }
@@ -2467,8 +2485,7 @@ class WithColor2<T extends HasColor>
     }
 }
 
-class WithColorCoord2<T extends Coord & HasColor>
-        extends WithColor2<T> {
+class WithColorCoord2<T extends Coord & HasColor> extends WithColor2<T> {
     WithColorCoord2(T item) {
         super(item);
     }
@@ -2486,8 +2503,7 @@ class WithColorCoord2<T extends Coord & HasColor>
     }
 }
 
-class Solid2<T extends Coord & HasColor & Weight>
-        extends WithColorCoord2<T> {
+class Solid2<T extends Coord & HasColor & Weight> extends WithColorCoord2<T> {
     Solid2(T item) {
         super(item);
     }
@@ -2545,8 +2561,7 @@ class SuperHero<POWER extends SuperPower> {
     }
 }
 
-class SuperSleuth<POWER extends XRayVision>
-        extends SuperHero<POWER> {
+class SuperSleuth<POWER extends XRayVision> extends SuperHero<POWER> {
     SuperSleuth(POWER power) {
         super(power);
     }
@@ -2556,9 +2571,7 @@ class SuperSleuth<POWER extends XRayVision>
     }
 }
 
-class
-CanineHero<POWER extends SuperHearing & SuperSmell>
-        extends SuperHero<POWER> {
+class CanineHero<POWER extends SuperHearing & SuperSmell> extends SuperHero<POWER> {
     CanineHero(POWER power) {
         super(power);
     }
@@ -2572,8 +2585,7 @@ CanineHero<POWER extends SuperHearing & SuperSmell>
     }
 }
 
-class SuperHearSmell
-        implements SuperHearing, SuperSmell {
+class SuperHearSmell implements SuperHearing, SuperSmell {
     @Override
     public void hearSubtleNoises() {
     }
@@ -2622,7 +2634,7 @@ public class EpicBattle {
 
 你已经在 [集合](book/12-Collections.md) 章节中看到了一些简单示例使用了通配符——在泛型参数表达式中的问号，在 [类型信息](book/19-Type-Information.md) 一章中这种示例更多。本节将更深入地探讨这个特性。
 
-我们的起始示例要展示数组的一种特殊行为：你可以将派生类的数组赋值给基类的引用：
+我们从一个示例开始，它展示了数组的一种特殊行为：你可以将派生类的数组赋值给基类的引用：
 
 ```java
 // generics/CovariantArrays.java
@@ -2663,11 +2675,11 @@ java.lang.ArrayStoreException: Orange
 
 `main()` 中的第一行创建了 **Apple** 数组，并赋值给一个 **Fruit** 数组引用。这是有意义的，因为 **Apple** 也是一种 **Fruit**，因此 **Apple** 数组应该也是一个 **Fruit** 数组。
 
-但是，如果实际的数组类型是 **Apple[]**，你可以在其中放置 **Apple** 或 **Apple** 的子类型，这在编译期和运行时都可以工作。但是你也可以在数组中放置 **Fruit** 对象。这对编译器来说是有意义的，因为它有一个 **Fruit[]** 引用——它有什么理由不允许将 **Fruit** 对象或任何从 **Fruit** 继承出来的对象（比如 **Orange**），放置到这个数组中呢？因此在编译期，这是允许的。然而，运行时的数组机制知道它处理的是 **Apple[]**，因此会在向数组中放置异构类型时抛出异常。
+但是，如果实际的数组类型是 **Apple[]**，你可以在其中放置 **Apple** 或 **Apple** 的子类型，这在编译期和运行时都可以工作。但是你也可以在数组中放置 **Fruit** 对象。这对编译器来说是有意义的，因为它有一个 **Fruit[]** 引用——它有什么理由不允许将 **Fruit** 对象或任何从 **Fruit** 继承出来的对象（比如 **Orange**），放置到这个数组中呢？因此在编译期，这是允许的。然而，【运行时的数组机制】知道它处理的是 **Apple[]**，因此【运行时的数组机制】会在放置异构（foreign）类型到数组时抛出异常。
 
-向上转型用在这里不合适。你真正在做的是将一个数组赋值给另一个数组。数组的行为是持有其他对象，这里只是因为我们能够向上转型而已，所以很明显，数组对象可以保留有关它们包含的对象类型的规则。看起来就像数组对它们持有的对象是有意识的，因此在编译期检查和运行时检查之间，你不能滥用它们。
+“向上转型”在这里不是恰当的描述。你真正在做的是将一个数组赋值给另一个数组。数组的行为是持有其他对象，但因为我们能够向上转型，所以很明显，数组对象可以保留有关它们所包含的对象类型的规则。这就好像数组是有意识地知道它们所容纳的（对象），因此在编译期检查和运行时检查都不能滥用数组。
 
-数组的这种赋值并不是那么可怕，因为在运行时你可以发现插入了错误的类型。但是泛型的主要目标之一是将这种错误检测移到编译期。所以当我们试图使用泛型集合代替数组时，会发生什么呢？
+数组的这种赋值并不是那么可怕，因为在运行时你可以发现插入了错误的类型。但是泛型的主要目标之一是将这种错误检测提前到编译期。所以当我们试图使用泛型集合代替数组时，会发生什么呢？
 
 ```java
 // generics/NonCovariantGenerics.java
@@ -2681,9 +2693,9 @@ public class NonCovariantGenerics {
 }
 ```
 
-尽管你在首次阅读这段代码时会认为“不能将一个 **Apple** 集合赋值给一个 **Fruit** 集合”。记住，泛型不仅仅是关于集合，它真正要表达的是“不能把一个涉及 **Apple** 的泛型赋值给一个涉及 **Fruit** 的泛型”。如果像在数组中的情况一样，编译器对代码的了解足够多，可以确定所涉及到的集合，那么它可能会留下一些余地。但是它不知道任何有关这方面的信息，因此它拒绝向上转型。然而实际上这也不是向上转型—— **Apple** 的 **List** 不是 **Fruit** 的 **List**。**Apple** 的 **List** 将持有 **Apple** 和 **Apple** 的子类型，**Fruit** 的 **List** 将持有任何类型的 **Fruit**。是的，这包括 **Apple**，但是它不是一个 **Apple** 的 **List**，它仍然是 **Fruit** 的 **List**。**Apple** 的 **List** 在类型上不等价于 **Fruit** 的 **List**，即使 **Apple** 是一种 **Fruit** 类型。
+尽管你在首次阅读这段代码时会认为“不能将一个 **Apple** 集合赋值给一个 **Fruit** 集合”。记住，泛型不仅仅是关于集合，它真正要表达的是“不能把一个 **Apple** 的泛型赋值给一个 **Fruit** 的泛型”。如果和在数组中的情况一样，编译器对代码的了解足够多，可以确定所涉及到的集合，那么它可能会留下一些余地。但是它不知道任何有关这方面的信息，因此它不允许向上转型。然而实际上这也不是向上转型—— **Apple** 的 **List** 不是 **Fruit** 的 **List**。**Apple** 的 **List** 将持有 **Apple** 和 **Apple** 的子类型，**Fruit** 的 **List** 将持有任何类型的 **Fruit**。是的，这包括 **Apple**，但是它不是一个 **Apple** 的 **List**，它仍然是 **Fruit** 的 **List**。**Apple** 的 **List** 在类型上不等价于 **Fruit** 的 **List**，即使 **Apple** 是一种 **Fruit** 类型。
 
-真正的问题是我们在讨论的集合类型，而不是集合持有对象的类型。与数组不同，泛型没有内建的协变类型。这是因为数组是完全在语言中定义的，因此可以具有编译期和运行时的内建检查，但是在使用泛型时，编译器和运行时系统不知道你想用类型做什么，以及应该采用什么规则。
+真正的问题是我们在讨论的集合类型，而不是集合持有对象的类型。与数组不同，泛型没有内建的协变类型。这是因为数组是完全在java语言中定义的，因此可以具有编译期和运行时的内建检查，但是在使用泛型时，编译器和运行时系统不知道你想用类型做什么，以及应该采用什么规则。（Java中，数组是协变的，泛型是不变的，`<? extends>`实现了泛型的协变，`<? super>`实现了泛型的逆变）
 
 但是，有时你想在两个类型间建立某种向上转型关系。通配符可以产生这种关系。
 
@@ -2709,17 +2721,22 @@ public class GenericsAndCovariance {
 }
 ```
 
-**flist** 的类型现在是 `List<? extends Fruit>`，你可以读作“一个具有任何从 **Fruit** 继承的类型的列表”。然而，这实际上并不意味着这个 **List** 将持有任何类型的 **Fruit**。通配符引用的是明确的类型，因此它意味着“某种 **flist** 引用没有指定的具体类型”。因此这个被赋值的 **List** 必须持有诸如 **Fruit** 或 **Apple** 这样的指定类型，但是为了向上转型为 **Fruit**，这个类型是什么没人在意。
+**flist** 的类型现在是 `List<? extends Fruit>`，你可以读作“一个具有任何继承自 **Fruit** 类型的列表”。然而，这实际上并不意味着这个 **List** 将持有任何类型的 **Fruit**。通配符引用的是明确的类型，因此它意味着“一些 **flist** 引用没有指定特定类型”。因此这个被赋值的 **List** 必须持有诸如 **Fruit** 或 **Apple** 这样的指定类型，但是为了向上转型为 **Fruit**，并不关心这个具体的类型是什么。（编译器只知道 **flist** 是**Fruit**某个子类的List，但并不知道这个子类具体是什么类，只好阻止向其中加入任何子类。为了类型安全，不能往使用了`? extends`的数据结构里写入任何的值。）
 
-**List** 必须持有一种具体的 **Fruit** 或 **Fruit** 的子类型，但是如果你不关心具体的类型是什么，那么你能对这样的 **List** 做什么呢？如果不知道 **List** 中持有的对象是什么类型，你怎能保证安全地向其中添加对象呢？就像在 **CovariantArrays.java** 中向上转型一样，你不能，除非编译器而不是运行时系统可以阻止这种操作的发生。你很快就会发现这个问题。
+**List** 必须持有一种具体的 **Fruit** 或 **Fruit** 的子类型，但是如果你不关心具体的类型是什么，那么你能对这样的 **List** 做什么呢？如果不知道 **List** 中持有的对象是什么类型，你怎能保证安全地向其中添加对象呢？就和 **CovariantArrays.java** 中的 向上转型的数组一样，你不能这样做，只不过是现在是编译器阻止了这种情况的发生，而不是运行时系统——你会更早发现问题。
 
-你可能认为事情开始变得有点走极端了，因为现在你甚至不能向刚刚声明过将持有 **Apple** 对象的 **List** 中放入一个 **Apple** 对象。是的，但编译器并不知道这一点。`List<? extends Fruit>` 可能合法地指向一个 `List<Orange>`。一旦执行这种类型的向上转型，你就丢失了向其中传递任何对象的能力，甚至传递 **Object** 也不行。
+你可能认为事情变得更糟了，因为现在你甚至不能向刚刚声明过将持有 **Apple** 对象的 **List** 中放入一个 **Apple** 对象。是的，但编译器并不知道这一点。`List<? extends Fruit>` 可以合法地指向一个 `List<Orange>`。一旦你做了这种“向上转型”，你就失去了传入任何对象的能力，甚至传递 **Object** 都不行。
 
-另一方面，如果你调用了一个返回 **Fruit** 的方法，则是安全的，因为你知道这个 **List** 中的任何对象至少具有 **Fruit** 类型，因此编译器允许这么做。
+另一方面，如果你调用一个返回 **Fruit** 类型的方法则是安全的，因为你知道这个 **List** 中的任何对象至少具有 **Fruit** 类型，因此编译器允许这么做。
+
+- 总结PECS原则如下：
+  - 如果要从集合中读取类型T的数据，并且不能写入，可以使用 ? extends 通配符；(Producer Extends)
+  - 如果要从集合中写入类型T的数据，并且不需要读取，可以使用 ? super 通配符；(Consumer Super)
+  - 如果既要存又要取，那么就不要使用任何通配符。
 
 ### 编译器有多聪明
 
-现在你可能会猜想自己不能去调用任何接受参数的方法，但是考虑下面的代码：
+现在你可能会认为你不能去调用任何接受参数的方法，但是考虑下面的代码：
 
 ```java
 // generics/CompilerIntelligence.java
@@ -2740,9 +2757,9 @@ public class CompilerIntelligence {
 
 这里对 `contains()` 和 `indexOf()` 的调用接受 **Apple** 对象作为参数，执行没问题。这是否意味着编译器实际上会检查代码，以查看是否有某个特定的方法修改了它的对象？
 
-通过查看 **ArrayList** 的文档，我们发现编译器没有那么聪明。尽管 `add()` 接受一个泛型参数类型的参数，但 `contains()` 和 `indexOf()` 接受的参数类型是 **Object**。因此当你指定一个 `ArrayList<? extends Fruit>` 时，`add()` 的参数就变成了"**? extends Fruit**"。从这个描述中，编译器无法得知这里需要 **Fruit** 的哪个具体子类型，因此它不会接受任何类型的 **Fruit**。如果你先把 **Apple** 向上转型为 **Fruit**，也没有关系——编译器仅仅会拒绝调用像 `add()` 这样参数列表中涉及通配符的方法。
+通过查看 **ArrayList** 的文档，我们发现编译器没有那么聪明。 `add()` 接受一个泛型参数类型的参数，而 `contains()` 和 `indexOf()` 接受的参数类型是 **Object**。因此当你指定一个 `ArrayList<? extends Fruit>` 时，`add()` 的参数就变成了"**? extends Fruit**"。从这个描述来看，编译器无法知道那里需要 **Fruit** 的哪个具体子类型，因此它不会接受任何类型的 **Fruit**。如果你先把 **Apple** 向上转型为 **Fruit**，也没有关系——编译器仅仅会拒绝调用诸如像 `add()` 这样参数列表中涉及通配符的方法。（当我们使用?号通配符的时候：**就只能调对象与类型无关的方法，不能调用对象与类型有关的方法。** 在上面的List集合，我是不能使用add()方法的。**因为add()方法是把对象丢进集合中，而现在我是不知道对象的类型是什么。**）
 
-`contains()` 和 `indexOf()` 的参数类型是 **Object**，不涉及通配符，所以编译器允许调用它们。这意味着将由泛型类的设计者来决定哪些调用是“安全的”，并使用 **Object** 类作为它们的参数类型。为了禁止对类型中使用了通配符的方法调用，需要在参数列表中使用类型参数。
+`contains()` 和 `indexOf()` 的参数类型是 **Object**，不涉及通配符，所以编译器允许调用它们。这意味着将由泛型类的设计者来决定哪些调用是“安全的”，并使用 **Object** 类作为它们的参数类型。要在类型使用通配符时禁止调用，请使用参数列表中的类型参数。
 
 下面展示一个简单的 **Holder** 类：
 
