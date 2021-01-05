@@ -1768,7 +1768,7 @@ public static void main(java.lang.String[]);
 
 所产生的字节码是相同的。对进入 `set()` 的类型进行检查是不需要的，因为这将由编译器执行。而对 `get()` 返回的值进行转型仍然是需要的，只不过不需要你来操作，它由编译器自动插入，这样你就不用编写和阅读杂乱的代码。
 
-`get()` 和 `set()` 产生了相同的字节码，这就告诉我们泛型的所有动作都发生在边界——编译时对入参的额外检查，以及对返回值的插入转类型。记住：“边界就是动作发生的地方”，这有助于解除对擦除的疑惑。
+`get()` 和 `set()` 产生了相同的字节码，这就告诉我们泛型的所有动作都发生在边界——对入参进行额外的编译期检查，以及对返回值插入的转型。记住：“边界就是动作发生的地方”，这有助于解除对擦除的疑惑。
 
 <!-- Compensating for Erasure -->
 
@@ -1868,7 +1868,7 @@ int main() {
 }
 ```
 
-Java 中的解决方案是传入一个工厂对象，并使用该对象创建新实例。方便的工厂对象只是 **Class** 对象，因此，如果使用类型标记，则可以使用 `newInstance()` 创建该类型的新对象：
+Java 中的解决方案是传入一个工厂对象，并使用该对象创建新实例。方便的工厂对象只是 **Class** 对象，因此，如果使用类型标记/**类型标签**，则可以使用 `newInstance()` 创建该类型的新对象：
 
 ```java
 // generics/InstantiateGenericType.java
@@ -2840,9 +2840,9 @@ public class SuperTypeWildcards {
 }
 ```
 
-参数 **apples** 是 **Apple** 的某种基类型的 **List**；这样你就知道向其中添加 **Apple** 或 **Apple** 的子类型是安全的。但是因为 **Apple** 是下界，所以你知道将 **Fruit** 添加到这样的 **List** 中是不安全的——将使这个 **List** 敞开口子，导致可以向其中添加非 **Apple** 类型的对象（只是**Apple** 的某种基类型，不一定就是**Fruit**），而这是违反静态类型安全的。（下界规定元素的最小的粒度，实际上是容器的元素的类型控制。所以放比 Apple 粒度小的如 Jonathan、Apple 都行， 但往外取时， 只有所有类的基类Object对象才能装下——但是这样的话，元素的类型信息就全部消失了。）
+参数 **apples** 是 **Apple** 的某种基类型的 **List**；这样你就知道向其中添加 **Apple** 或 **Apple** 的子类型是安全的。但是因为 **Apple** 是下界，所以你知道将 **Fruit** 添加到这样的 **List** 中是不安全的——将使这个 **List** 敞开口子，导致可以向其中添加非 **Apple** 类型的对象（只是**Apple** 的某种基类，这种基类不一定就是 **Fruit**），而这是违反静态类型安全的。（因为下界规定了元素的最小粒度的下限，实际上是放松了容器元素的类型控制。既然元素是 **Apple** 的基类，所以放比 **Apple** 粒度小的如 Jonathan、Apple 都行， 但往外取时， 只有所有类的基类 **Object** 对象才能装下——但是这样的话，元素的类型信息全部丢失。）
 
-下面的示例复习了一下逆变和通配符的的使用：
+下面的示例复习了一下协变和通配符的的使用：
 
 ```java
 // generics/GenericReading.java
@@ -2904,6 +2904,31 @@ public class GenericReading {
 然而对于泛型类来说，当你创建这个类的实例时，就要为这个类确定参数。就像在 `f2()` 中看到的，**fruitReader** 实例可以从 `List<Fruit>` 中读取一个 **Fruit** ，因为这就是它的确切类型。但在 `List<Apple>` 也应该能产生 **Fruit** 对象时， **fruitReader** 却不允许（容器之间没有继承关系）。
 
 为了修正这个问题，`CovariantReader.readCovariant()` 方法将接受 `List<？extends T>` ，因此，从这个列表中读取一个 **T** 是安全的（你知道在这个列表中的所有对象至少是一个 **T** ，并且可能是从 T 导出的某种对象）。在 `f3()` 中，你可以看到现在可以从 `List<Apple>` 中读取 **Fruit** 了。
+
+```java
+//第一段
+public void testAdd(List<? extends Animal> list){
+		list.add(new Animal("animal"));
+		list.add(new Bird("bird"));
+		list.add(new Cat("cat"));
+}
+//第二段
+List<? extends Animal> list = new ArrayList<>();
+list.add(new Animal("animal"));
+list.add(new Bird("bird"));
+list.add(new Cat("cat"));
+/*
+我们知道List<Animal>、List<Cat等都是List<？ extends Animal>的子类型。先假设传入的参数为为List<Animal>,则第一段代码的三个“add”操作都是可行的；可如果是List<Bird>呢？？则只有第二个“add”可以执行；再假设传入的是List<Tiger>（Tiger是想象出来的，可认为是Cat的子类），则三个“add”操作都不能执行。
+
+现在反过来说，给testAdd传入不同的参数，三个“add”操作都可能引发类型不兼容问题，而传入的参数是未知的，所以java为了保护其类型一致，禁止向List<? extends Animal>添加任意对象，不过却可以添加null，即list.add(null)是可行的。
+
+有了上面谈到的基础，再来理解第二段代码就不难了，因为List<? extends Animal>的类型“？ extends Animal”无法确定，可以是Animal，Bird或者Cat等，所以为了保护其类型的一致性，也是不能往list添加任意对象的，不过却可以添加null。
+
+总结如下：不能往List<? extends Animal> 添加任意对象，除了null。
+*/
+```
+
+
 
 ### 无界通配符
 
