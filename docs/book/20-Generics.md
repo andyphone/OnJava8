@@ -903,7 +903,7 @@ public class Sets {
 
 前三个方法通过将第一个参数的引用复制到新的 **HashSet** 对象中来复制第一个参数，因此不会直接修改参数集合。因此，返回值是一个新的 **Set** 对象。
 
-这四种方法代表数学集合操作： `union()` 返回一个包含两个参数并集的 **Set** ， `intersection()` 返回一个包含两个参数集合交集的 **Set** ， `difference()` 从 **superset** 中减去 **subset** 后剩余的元素 （差集），而 `complement()` 返回所有不在交集中的元素的 **Set** （交集的补集）。作为显示这些方法效果的简单示例的一部分，下面是一个包含不同水彩名称的 **enum** ：
+这四种方法代表数学集合操作： `union()` 返回一个包含两个参数并集的 **Set** ， `intersection()` 返回一个包含两个参数集合交集的 **Set** ， `difference()` 从 **superset** 中减去 **subset** 后剩余的元素 （差集），而 `complement()` 返回的 **Set** 包含所有不在交集中的元素（交集的补集）。作为显示这些方法效果的简单示例的一部分，下面是一个包含不同水彩名称的 **enum** ：
 
 ```java
 // generics/watercolors/Watercolors.java
@@ -3902,10 +3902,10 @@ public class SelfBounding {
 class A extends SelfBounded<A>{}
 ```
 
-这会强制要求将正在定义的类当作参数传递给基类。
+这将迫使你把正在定义的类作为参数传递给基类。
 
-自限定的参数有何意义呢？它可以保证类型参数必须与正在被定义的类相同。正如你在 B 类的定义中所看到的，还可以从使用了另一个 **SelfBounded** 参数的 **SelfBounded** 中导出，尽管在 **A** 类看到的用法看起来是主要的用法。对定义 **E** 的尝试说明不能使用不是 **SelfBounded** 的类型参数。
-遗憾的是， **F** 可以编译，不会有任何警告，因此自限定惯用法不是可强制执行的。如果它确实很重要，可以要求一个外部工具来确保不会使用原生类型来替代参数化类型。
+自限定的参数有何附带意义呢？——它可以保证类型参数必须与正在定义的类相同。如同你在 B 类的定义中所看到的，还可以从使用另一个 **SelfBounded** 参数的 **SelfBounded** 中派生，尽管在 **A** 类看到的用法看起来是主要的用法。定义 **E** 的尝试表明了，不能使用非**SelfBounded** 的类型参数。
+遗憾的是， **F** 可以编译，不会有任何警告，因此自限定惯用法不是可强制执行的。如果这真的很重要，可以用一个外部工具来确保原始类型不被使用来代替参数化类型。
 注意，可以移除自限定这个限制，这样所有的类仍旧是可以编译的，但是 **E** 也会因此而变得可编译：
 
 ```java
@@ -3935,7 +3935,7 @@ class D2 {}
 class E2 extends NotSelfBounded<D2> {}
 ```
 
-因此很明显，自限定限制只能强制作用于继承关系。如果使用自限定，就应该了解这个类所用的类型参数将与使用这个参数的类具有相同的基类型。这会强制要求使用这个类的每个人都要遵循这种形式。
+显然，自限定约束的作用只是为了强制继承关系。如果使用了自限定，说明类使用的类型参数与使用该类型参数的类的类型是一样的。它迫使任何使用该类的人都要遵循这种形式。
 还可以将自限定用于泛型方法：
 
 ```java
@@ -3955,13 +3955,13 @@ public class SelfBoundingMethods {
 }
 ```
 
-这可以防止这个方法被应用于除上述形式的自限定参数之外的任何事物上。
+这样可以防止这个方法被应用于除上述形式的自限定参数之外的其它地方。
 
 ### 参数协变
 
 自限定类型的价值在于它们可以产生*协变参数类型*——方法参数类型会随子类而变化。
 
-尽管自限定类型还可以产生与子类类型相同的返回类型，但是这并不十分重要，因为*协变返回类型*是在 Java 5 引入：
+尽管自限定类型还可以产生与子类类型相同的返回类型，但是这并不十分重要，因为*协变返回类型*在 Java 5 引入了（如下）：
 
 ```java
 // generics/CovariantReturnTypes.java
@@ -3986,9 +3986,9 @@ public class CovariantReturnTypes {
 }
 ```
 
-**DerivedGetter** 中的 `get()` 方法覆盖了 **OrdinaryGetter** 中的 `get()` ，并返回了一个从 `OrdinaryGetter.get()` 的返回类型中导出的类型。尽管这是完全合乎逻辑的事情（导出类方法应该能够返回比它覆盖的基类方法更具体的类型）但是这在早先的 Java 版本中是不合法的。
+**DerivedGetter** 中的 `get()` 方法覆盖了 **OrdinaryGetter** 中的 `get()` ，并返回了一个从 `OrdinaryGetter.get()` 的返回类型中派生的类型。尽管这是完全合乎逻辑的事情（派生类方法应该能够返回比它重写的基类方法更具体的类型）但是这在早先的 Java 版本中是不合法的。
 
-自限定泛型事实上将产生确切的导出类型作为其返回值，就像在 `get()` 中所看到的一样：
+自限定泛型事实上将产生确切的派生类型作为其返回值，就像这里 所看到的`get()` 一样：
 
 ```java
 // generics/GenericsAndReturnTypes.java
@@ -4007,7 +4007,7 @@ public class GenericsAndReturnTypes {
 }
 ```
 
-注意，这段代码不能编译，除非是使用囊括了协变返回类型的 Java 5。
+注意，这需要使用囊括了协变返回类型的 Java 5，否则这段代码不能编译。
 
 然而，在非泛型代码中，参数类型不能随子类型发生变化：
 
@@ -4042,8 +4042,8 @@ OrdinarySetter.set(Base)
 */
 ```
 
-`set(derived)` 和 `set(base)` 都是合法的，因此 `DerivedSetter.set()` 没有覆盖 `OrdinarySetter.set()` ，而是重载了这个方法。从输出中可以看到，在 **DerivedSetter** 中有两个方法，因此基类版本仍旧是可用的，因此可以证明它被重载过。
-但是，在使用自限定类型时，在导出类中只有一个方法，并且这个方法接受导出类型而不是基类型为参数：
+`set(derived)` 和 `set(base)` 都是合法的，因此 `DerivedSetter.set()` 没有重写 `OrdinarySetter.set()` ，而是重载了这个方法。从输出中可以看到，在 **DerivedSetter** 中有两个方法，因此基类版本仍旧是可用的，因此可以证明它被重载过。
+但是，在使用自限定类型时，派生类中只有一个方法，并且这个方法接受派生类型而不是基类型为参数：
 
 ```java
 // generics/SelfBoundingAndCovariantArguments.java
@@ -4055,8 +4055,7 @@ interface SelfBoundSetter<T extends SelfBoundSetter<T>> {
 interface Setter extends SelfBoundSetter<Setter> {}
 
 public class SelfBoundingAndCovariantArguments {
-    void
-    testA(Setter s1, Setter s2, SelfBoundSetter sbs) {
+    void testA(Setter s1, Setter s2, SelfBoundSetter sbs) {
         s1.set(s2);
         //- s1.set(sbs);
         // error: method set in interface SelfBoundSetter<T>
@@ -4075,7 +4074,7 @@ public class SelfBoundingAndCovariantArguments {
 }
 ```
 
-编译器不能识别将基类型当作参数传递给 `set()` 的尝试，因为没有任何方法具有这样的签名。实际上，这个参数已经被覆盖。
+编译器不能识别将基类型当作参数传递给 `set()` 的尝试，因为没有任何方法具有这样的签名。这个参数实际上已经被重写。
 如果不使用自限定类型，普通的继承机制就会介入，而你将能够重载，就像在非泛型的情况下一样：
 
 ```java
@@ -4114,9 +4113,9 @@ GenericSetter.set(Base)
 
 ## 动态类型安全
 
-因为可以向 Java 5 之前的代码传递泛型集合，所以旧式代码仍旧有可能会破坏你的集合。Java 5 的 **java.util.Collections** 中有一组便利工具，可以解决在这种情况下的类型检查问题，它们是：静态方法 `checkedCollection()` 、`checkedList()`、 `checkedMap()` 、 `checkedSet()` 、`checkedSortedMap()`和 `checkedSortedSet()`。这些方法每一个都会将你希望动态检查的集合当作第一个参数接受，并将你希望强制要求的类型作为第二个参数接受。
+因为可以向 Java 5 之前的代码传递泛型集合，所以旧式代码仍旧有可能会破坏你的集合。Java 5 的 **java.util.Collections** 中有一组便利工具，可以解决在这种情况下的类型检查问题，它们是：静态方法 `checkedCollection()` 、`checkedList()`、 `checkedMap()` 、 `checkedSet()` 、`checkedSortedMap()`和 `checkedSortedSet()`。所有这些方法都会将你希望动态检查的集合当作第一个参数，并将你希望强制要求的类型作为第二个参数。
 
-受检查的集合在你试图插入类型不正确的对象时抛出 **ClassCastException** ，这与泛型之前的（原生）集合形成了对比，对于后者来说，当你将对象从集合中取出时，才会通知你出现了问题。在后一种情况中，你知道存在问题，但是不知道罪魁祸首在哪里，如果使用受检查的集合，就可以发现谁在试图插入不良对象。
+受检查的集合在你试图插入类型不正确的对象时抛出 **ClassCastException** ，而不是之前泛型（原生）集合——当你将对象从集合中取出时，才会通知你出现了问题——在种情况中，你知道存在问题，但是不知道罪魁祸首在哪里。如果使用受检查的集合，就可以发现谁在试图插入不良对象。
 让我们用受检查的集合来看看“将猫插入到狗列表中”这个问题。这里，`oldStyleMethod()` 表示遗留代码，因为它接受的是原生的 **List** ，而 **@SuppressWarnings（“unchecked”）** 注解对于压制所产生的警告是必需的：
 
 ```java
@@ -4155,14 +4154,14 @@ with element type class typeinfo.pets.Dog
 */
 ```
 
-运行这个程序时，你会发现插入一个 **Cat** 对于 **dogs1** 来说没有任何问题，而 **dogs2** 立即会在这个错误类型的插入操作上抛出一个异常。还可以看到，将导出类型的对象放置到将要检查基类型的受检查容器中是没有问题的。
+运行这个程序时，你会发现插入一个 **Cat** 对于 **dogs1** 来说没有任何问题，而 **dogs2** 立即会在这个错误类型的插入操作上抛出一个异常。还可以看到，将派生类型的对象放置到将要检查基类型的受检查容器中是没有问题的【` pets.add(new Cat());`】。
 
 <!-- Exceptions -->
 
 ## 泛型异常
 
-由于擦除的原因，**catch** 语句不能捕获泛型类型的异常，因为在编译期和运行时都必须知道异常的确切类型。泛型类也不能直接或间接继承自 **Throwable**（这将进一步阻止你去定义不能捕获的泛型异常）。
-但是，类型参数可能会在一个方法的 **throws** 子句中用到。这使得你可以编写随检查型异常类型变化的泛型代码：
+由于擦除的原因，**catch** 语句不能捕获泛型类型的异常，因为在编译期和运行时都必须知道异常的确切类型。泛型类也不能直接或间接地继承 **Throwable**（这将进一步阻止你试图定义不能捕获的泛型异常）。
+但是，类型参数可以在方法声明的 **throws** 子句中使用。这意味着你可以编写随【被检查的异常】的类型而变化的泛型代码：
 
 ```java
 // generics/ThrowGenericException.java
@@ -4173,8 +4172,7 @@ interface Processor<T, E extends Exception> {
     void process(List<T> resultCollector) throws E;
 }
 
-class ProcessRunner<T, E extends Exception>
-extends ArrayList<Processor<T, E>> {
+class ProcessRunner<T, E extends Exception> extends ArrayList<Processor<T, E>> {
     List<T> processAll() throws E {
         List<T> resultCollector = new ArrayList<>();
         for(Processor<T, E> processor : this)
@@ -4185,12 +4183,10 @@ extends ArrayList<Processor<T, E>> {
 
 class Failure1 extends Exception {}
 
-class Processor1
-implements Processor<String, Failure1> {
+class Processor1 implements Processor<String, Failure1> {
     static int count = 3;
     @Override
-    public void process(List<String> resultCollector)
-    throws Failure1 {
+    public void process(List<String> resultCollector) throws Failure1 {
         if(count-- > 1)
             resultCollector.add("Hep!");
         else
@@ -4202,12 +4198,10 @@ implements Processor<String, Failure1> {
 
 class Failure2 extends Exception {}
 
-class Processor2
-implements Processor<Integer, Failure2> {
+class Processor2 implements Processor<Integer, Failure2> {
     static int count = 2;
     @Override
-    public void process(List<Integer> resultCollector)
-    throws Failure2 {
+    public void process(List<Integer> resultCollector) throws Failure2 {
         if(count-- == 0)
             resultCollector.add(47);
         else {
@@ -4247,15 +4241,15 @@ Failure2
 */
 ```
 
-**Processor** 执行 `process()` 方法，并且可能会抛出具有类型 **E** 的异常。`process()` 的结果存储在 `List<T>resultCollector` 中（这被称为*收集参数*）。**ProcessRunner** 有一个 `processAll()` 方法，它会在所持有的每个 **Process** 对象执行，并返回 **resultCollector** 。
-如果不能参数化所抛出的异常，那么由于检查型异常的缘故，将不能编写出这种泛化的代码。
+**Processor** 执行 `process()` 方法，并且可能会抛出具有类型 **E** 的异常。`process()` 的结果存储在 `List<T>resultCollector` 中（这被称为*收集参数* *collecting* *parameter*）。**ProcessRunner** 有一个 `processAll()` 方法，它执行它所持有的每个 **Process** 对象，并返回 **resultCollector** 。
+如果不能参数化所抛出的异常（`E extends Exception`），那么由于【被检查的异常】的缘故，将不能编写出这种通用的代码。
 
 <!-- Mixins -->
 
 ## 混型
 
-术语*混型*随时间的推移好像拥有了无数的含义，但是其最基本的概念是混合多个类的能力，以产生一个可以表示混型中所有类型的类。这往往是你最后的手段，它将使组装多个类变得简单易行。
-混型的价值之一是它们可以将特性和行为一致地应用于多个类之上。如果想在混型类中修改某些东西，作为一种意外的好处，这些修改将会应用于混型所应用的所有类型之上。正由于此，混型有一点*面向切面编程* （AOP） 的味道，而切面经常被建议用来解决混型问题。
+*混型*    **mixin**  这一术语已经被赋予了多种含义，但其最基本的概念是将多个类的功能混合起来，由此产生一个类，可以代表所有类型的混型 **mixins** 。这往往是你最后才做的事情——方便了你轻松组装类。
+混型的价值之一是它们可以将特性和行为一致地应用于多个类之上。另外，如果在混型类中修改了某些东西，这些修改将会应用在所有使用混型的类上面。正因为这样，混型有一点*面向切面编程* （AOP） 的味道，而切面经常被建议用来解决混型问题。
 
 ### C++ 中的混型
 
@@ -4316,11 +4310,11 @@ test string 2 1452987605 2
 TimeStamped<SerialNumbered<Basic>> mixin1，mixin2；
 ```
 
-遗憾的是，Java 泛型不允许这样。擦除会忘记基类类型，因此
+遗憾的是，Java 泛型不允许这样。擦除会忘记基类类型，因此：
 
 >  泛型类不能直接继承自一个泛型参数
 
-这突显了许多我在 Java 语言设计决策（以及与这些功能一起发布）中遇到的一大问题：处理一件事很有希望，但是当您实际尝试做一些有趣的事情时，您会发现自己做不到。
+这突显了我在许多 Java 语言设计决策（以及与这些特性一起推广）中遇到的一大问题：有很多承诺，但是当您真正尝试做一些有趣的事情时，您会发现做不到。
 
 ### 与接口混合
 
@@ -4364,11 +4358,9 @@ class BasicImp implements Basic {
     public String get() { return value; }
 }
 
-class Mixin extends BasicImp
-implements TimeStamped, SerialNumbered {
+class Mixin extends BasicImp implements TimeStamped, SerialNumbered {
     private TimeStamped timeStamp = new TimeStampedImp();
-    private SerialNumbered serialNumber =
-        new SerialNumberedImp();
+    private SerialNumbered serialNumber = new SerialNumberedImp();
     @Override
     public long getStamp() {
         return timeStamp.getStamp();
@@ -4396,13 +4388,13 @@ test string 2 1494331663027 2
 */
 ```
 
-**Mixin** 类基本上是在使用*委托*，因此每个混入类型都要求在 **Mixin** 中有一个相应的域，而你必须在 **Mixin** 中编写所有必需的方法，将方法调用转发给恰当的对象。这个示例使用了非常简单的类，但是当使用更复杂的混型时，代码数量会急速增加。[^4]
+上面的 **Mixin** 类基本上是在使用*委托* *delegation*，因此每个混入类型都要求在 **Mixin** 中有一个相应的字段，而你必须在 **Mixin** 中编写所有必需的方法，将方法调用转发给恰当的对象。这个示例使用了一些简单的类，但是当使用更复杂的混型时，代码数量会急速增加。[^4]
 
 ### 使用装饰器模式
 
 当你观察混型的使用方式时，就会发现混型概念好像与*装饰器*设计模式关系很近。装饰器经常用于满足各种可能的组合，而直接子类化会产生过多的类，因此是不实际的。
-装饰器模式使用分层对象来动态透明地向单个对象中添加责任。装饰器指定包装在最初的对象周围的所有对象都具有相同的基本接口。某些事物是可装饰的，可以通过将其他类包装在这个可装饰对象的四周，来将功能分层。这使得对装饰器的使用是透明的——无论对象是否被装饰，你都拥有一个可以向对象发送的公共消息集。装饰类也可以添加新方法，但是正如你所见，这将是受限的。
-装饰器是通过使用组合和形式化结构（可装饰物/装饰器层次结构）来实现的，而混型是基于继承的。因此可以将基于参数化类型的混型当作是一种泛型装饰器机制，这种机制不需要装饰器设计模式的继承结构。
+装饰器模式使用分层对象来动态透明地向单个对象中添加责任。该模式规定，包装在最初的对象周围的所有对象都具有相同的基本接口。某些事物是可装饰的，可以通过将其他类包装在这个可装饰对象的四周，来将功能分层。这使得对装饰器的使用是透明的——无论对象是否被装饰，你都拥有一个可以向对象发送的公共消息集。装饰类也可以添加新方法，但是正如你所见，这将是受限的。
+装饰器是通过使用组合和形式化结构（可装饰物/装饰器层次结构）来实现的，而混型是基于继承的。可以将基于参数化类型的混型当作是一种泛型装饰器机制，这种机制不需要装饰器设计模式的继承结构。
 前面的示例可以被改写为使用装饰器：
 
 ```java
