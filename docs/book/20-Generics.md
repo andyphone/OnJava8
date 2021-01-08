@@ -5043,7 +5043,7 @@ Square 11 rotate
 
 我们使用 `peek()` 当做对 `rotate()` 的调用，因为 `peek()` 执行一个操作（此处是出于副作用），并在未更改的情况下传递对象。
 
-注意，使用 **FilledList** 和 **shapeQ** 调用 `forEach()` 比 `Apply.apply()` 代码整洁得多。 在代码简单性和可读性方面，结果比以前的方法好得多。 并且，现在也不可能从  `main()` 引发异常。
+注意，使用 **FilledList** 和 **shapeQ** 调用 `forEach()` 比 `Apply.apply()` 代码整洁得多。 在代码简单性和可读性方面，结果比以前的方法好得多。 并且，现在不再从  `main()` 引发运行时异常。
 
 <!-- Assisted Latent Typing in Java 8 -->
 
