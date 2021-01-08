@@ -5232,7 +5232,7 @@ Teller 4 serves Customer 12
 */
 ```
 
-可以看到 `create()` 生成一个新的 **Collection** 对象，而 `fill()` 添加到现有 **Collection** 中。第二个版本`fill()` 显示，它不仅与无关的新类型 **Bank** 一起使用，还能与 **List** 一起使用。因此，从技术上讲，`fill()` 的第一个版本在技术上不是必需的，但在使用 **Collection** 时提供了较短的语法。
+可以看到 `create()` 生成一个新的 **Collection** 对象，而 `fill()` 添加到现有 **Collection** 中。第二个版本`fill()` 显示，它不仅与无关的新类型 **Bank** 一起使用，还能与 **List** 一起使用。因此，从技术上讲，`fill()` 的第一个版本不是必需的，但使用 **Collection** 提供了较短的语法。
 
 <!-- Summary: Is Casting Really So Bad? -->
 
