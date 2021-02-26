@@ -745,7 +745,7 @@ a9: [Hello, Hello, Hello, World, World, Hello]
 
 * **void setAll(int[] a, IntUnaryOperator gen)**
 * **void setAll(long[] a, IntToLongFunction gen)**
-* **void setAll(double[] a, IntToDoubleFunctiongen)**
+* **void setAll(double[] a, IntToDoubleFunction gen)**
 * **<T> void setAll(T[] a, IntFunction<? extendsT> gen)**
 
 除了 **int** , **long** , **double** 有特殊的版本，其他的一切都由泛型版本处理。生成器不是 **Supplier** 因为它们不带参数，并且必须将 **int** 数组索引作为参数。
@@ -1477,7 +1477,7 @@ public interface Rand {
 
 ```
 
-对于除了 **int** 、 **long** 和 **double** 之外的所有基本类型元素生成器，只生成数组，而不是 Count 中看到的完整操作集。这只是一个设计选择，因为本书不需要额外的功能。
+对于除了 **int** 、 **long** 和 **double** 之外的所有基本类型元素生成器，只生成数组（没对数组内元素初始化，用临近的类型强制转换获得），而不是 Count 中看到的完整操作集。这只是一个设计选择，因为本书不需要额外的功能。
 
 下面是对所有 **Rand** 工具的测试：
 
@@ -2115,10 +2115,17 @@ public class ArrayCopying {
         }
     }
 }
-/* Output: a1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14] a1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-           a2:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]a2:[0, 1, 2, 3, 4, 5, 6]a2:[
-           0, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0]a4:[4, 5, 6, 7, 8, 9, 10, 11][Sub0, Sub1, Sub2, Sub3, Sub4, Sub5, Sub6][
-           Sub0, Sub1, Sub2, Sub3, Sub4, Sub5, Sub6]java.lang.ArrayStoreException */
+/* Output:
+a1: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+a1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+a2: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+a2: [0, 1, 2, 3, 4, 5, 6]
+a2: [0, 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0]
+a4: [4, 5, 6, 7, 8, 9, 10, 11]
+[Sub0, Sub1, Sub2, Sub3, Sub4, Sub5, Sub6]
+[Sub0, Sub1, Sub2, Sub3, Sub4, Sub5, Sub6]
+java.lang.ArrayStoreException
+*/
 
 ```
 
@@ -2144,7 +2151,7 @@ public class ArrayCopying {
 
 **数组** 提供了 **equals()** 来比较一维数组，以及 **deepEquals()** 来比较多维数组。对于所有原生类型和对象，这些方法都是重载的。
 
-数组相等的含义：数组必须有相同数量的元素，并且每个元素必须与另一个数组中的对应元素相等，对每个元素使用 **equals()**(对于原生类型，使用原生类型的包装类的 **equals()** 方法;例如，int的Integer.equals()。
+数组相等的含义：数组必须有相同数量的元素，并且每个元素必须与另一个数组中的对应元素相等，对每个元素使用 **equals()** ( 对于原生类型，使用原生类型的包装类的 **equals()** 方法;例如，int的Integer.equals()。）
 
 ```JAVA
 // arrays/ComparingArrays.java
@@ -2551,11 +2558,11 @@ Location of 635 is 2, a[2] is 635
 
 在while循环中，随机值作为搜索项生成，直到在数组中找到其中一个为止。
 
-如果找到了搜索项，**Arrays.binarySearch()** 将生成一个大于或等于零的值。否则，它将产生一个负值，表示如果手动维护已排序的数组，则应该插入元素的位置。产生的值是 -(插入点) - 1 。插入点是大于键的第一个元素的索引，如果数组中的所有元素都小于指定的键，则是 **a.size()** 。
+如果找到了搜索项（搜索键 r），**Arrays.binarySearch()** 将生成一个大于或等于零的值。否则，它会产生一个负值，代表如果你是手工维护排序数组的话，该元素应该被插入的位置。产生的值是 - (插入点) - 1 。插入点是大于搜索键 r 的第一个元素的索引，如果数组中的所有元素都小于搜索键 r，则是 **a.size()** 。
 
-如果数组包含重复的元素，则无法保证找到其中的那些重复项。搜索算法不是为了支持重复的元素，而是为了容忍它们。如果需要没有重复元素的排序列表，可以使用 **TreeSet** (用于维持排序顺序)或 **LinkedHashSet** (用于维持插入顺序)。这些类自动为您处理所有的细节。只有在出现性能瓶颈的情况下，才应该使用手工维护的数组替换这些类中的一个。
+如果数组包含重复的元素，则无法保证找到其中的那些重复项。搜索算法不是为了支持重复的元素，而是为了容忍它们。如果需要元素不重复的排序列表，可以使用 **TreeSet** (用于维持排序)或 **LinkedHashSet** (用于维持插入顺序)。这些类自动为您处理所有的细节。只有在出现性能瓶颈的情况下，才应该使用手工维护的数组替换这些类。
 
-如果使用比较器(原语数组不允许使用比较器进行排序)对对象数组进行排序，那么在执行 **binarySearch()** (使用重载版本的binarySearch())时必须包含相同的比较器。例如，可以修改 **StringSorting.java** 来执行搜索:
+如果使用比较器(原语数组不允许使用比较器进行排序)对对象数组进行排序，那么在执行 **binarySearch()** ( 使用重载版本的binarySearch() ) 时必须包含相同的比较器。例如，可以修改 **StringSorting.java** 来执行搜索:
 
 ```JAVA
 // arrays/AlphabeticSearch.java
@@ -2604,11 +2611,11 @@ import static onjava.ArrayShow.*;
 public class ParallelPrefix1 {
     public static void main(String[] args) {
         int[] nums = new Count.Pint().array(10);
-        show(nums);
-        System.out.println(Arrays.stream(nums).reduce(Integer::sum).getAsInt());
+        show(nums);//[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+        System.out.println(Arrays.stream(nums).reduce(Integer::sum).getAsInt());//45
         Arrays.parallelPrefix(nums, Integer::sum);
-        show(nums);
-        System.out.println(Arrays.stream(new Count.Pint().array(6)).reduce(Integer::sum).getAsInt());
+        show(nums);//[0, 1, 3, 6, 10, 15, 21, 28, 36, 45]
+        System.out.println(Arrays.stream(new Count.Pint().array(6)).reduce(Integer::sum).getAsInt());//15
     }
 }
 /* Output:
