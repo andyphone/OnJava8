@@ -342,7 +342,7 @@ final class Explore extends java.lang.Enum<Explore> {
 
 答案是，values() 是由编译器添加的 static 方法。可以看出，在创建 Explore 的过程中，编译器还为其添加了 valueOf() 方法。这可能有点令人迷惑，Enum 类不是已经有 valueOf() 方法了吗。
 
-不过 Enum 中的 valueOf() 方法需要两个参数，而这个新增的方法只需一个参数。由于这里使用的 Set 只存储方法的名字，而不考虑方法的签名，所以在调用 Explore.removeAll(Enum) 之后，就只剩下[values] 了。
+不过 Enum 中的 valueOf() 方法需要两个参数，而这个新增的方法只需一个参数。由于这里存储用的 Set 只存方法名，而不是方法签名，所以在调用 Explore.removeAll(Enum) 之后，就只剩下[values] 了。
 
 从最后的输出中可以看到，编译器将 Explore 标记为 final 类，所以无法继承自 enum，其中还有一个 static 的初始化子句，稍后我们将学习如何重定义该句。
 
